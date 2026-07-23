@@ -1,0 +1,15 @@
+[package]
+name = "tree-sitter-mcp"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+rmcp = "2.2.0"
+rmcp-macros = "2.2.0"
+serde = "1.0.229"
+serde_json = "1.0.151"
+thiserror = "2.0.19"
+tracing = "0.1.44"
+tree-sitter = "0.26.11"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
