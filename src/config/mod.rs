@@ -2,14 +2,10 @@ use crate::config::extension::ExtensionMap;
 
 pub(crate) mod extension;
 
-/// Top-level configuration matching the TOML file layout.
-///
+/// Currently Implemented only
 /// ```toml
-/// grammar_dir = "~/.local/share/tree-sitter-mcp/runtime"
-///
 /// [extensions]
-/// rs = ["rust"]
-/// py = ["python"]
+/// string = string[]
 /// ```
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub(crate) struct Config {
