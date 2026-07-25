@@ -536,6 +536,9 @@ opencl = ["cl"]
 just = ["just", { glob = "justfile" }, { glob = "Justfile" }, { glob = ".justfile" }, { glob = ".Justfile" }]
 gn = ["gn", "gni"]
 blueprint = ["blp"]
+
+# these seem wrong
+
 forth = ["fs", "forth", "fth", "4th"]
 fsharp = ["fs", "fsx", "fsi", "fsscript"]
 t32 = ["cmm", "t32"]

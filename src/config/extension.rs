@@ -1,30 +1,53 @@
+use crate::config::ConfigError;
 use std::collections::HashMap;
-use std::fmt;
-use std::ops::Deref;
-use std::str::FromStr;
 
-use crate::config::Config;
-
-#[derive(Debug, thiserror::Error)]
-pub enum ConfigError {
-    #[error("TOML syntax error: {0}")]
-    Parse(#[from] toml::de::Error),
-
-    #[error("missing [extensions] table")]
-    MissingExtensionsTable,
-}
+use globset::GlobBuilder;
+use serde::{Deserialize, Deserializer};
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(untagged)]
 pub enum ExtensionEntry {
-    Ext(String),
+    #[serde(deserialize_with = "deserialize_glob")]
     Glob { glob: String },
+
+    #[serde(deserialize_with = "deserialize_ext")]
+    Ext(String),
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct ExtensionMap(HashMap<String, Vec<ExtensionEntry>>);
+#[serde(try_from = "ExtensionMapWrapper")]
+pub struct ExtensionMap(pub HashMap<String, Vec<ExtensionEntry>>);
 
-impl Deref for ExtensionMap {
+#[derive(Deserialize)]
+struct ExtensionMapWrapper {
+    extensions: HashMap<String, Vec<ExtensionEntry>>,
+}
+
+impl TryFrom<ExtensionMapWrapper> for ExtensionMap {
+    type Error = ConfigError;
+
+    fn try_from(wire: ExtensionMapWrapper) -> Result<Self, Self::Error> {
+        for (lang_key, entries) in &wire.extensions {
+            if entries.is_empty() {
+                return Err(ConfigError::EmptyExtensions(lang_key.clone()));
+            }
+        }
+        Ok(ExtensionMap(wire.extensions))
+    }
+}
+
+impl ExtensionMap {
+    pub fn from_toml_str(s: &str) -> Result<Self, ConfigError> {
+        let wire: ExtensionMapWrapper = toml::from_str(s).map_err(|e| match e.message() {
+            m if m.contains("missing field `extensions`") => ConfigError::MissingExtensionsTable,
+            _ => e.into(),
+        })?;
+
+        Self::try_from(wire)
+    }
+}
+
+impl std::ops::Deref for ExtensionMap {
     type Target = HashMap<String, Vec<ExtensionEntry>>;
 
     fn deref(&self) -> &Self::Target {
@@ -32,29 +55,32 @@ impl Deref for ExtensionMap {
     }
 }
 
-impl FromStr for ExtensionMap {
-    type Err = ConfigError;
+fn deserialize_ext<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let root: Config = toml::from_str(s)?;
-
-        if root.extensions.is_empty() {
-            return Err(ConfigError::MissingExtensionsTable);
-        }
-
-        Ok(root.extensions)
+    if s.contains(['/', '*', '?', '[']) || s.is_empty() {
+        return Err(serde::de::Error::custom("Invalid plain extension string"));
     }
+    Ok(s)
 }
 
-impl fmt::Display for ExtensionMap {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let root = Config {
-            extensions: self.clone(),
-        };
-
-        match toml::to_string(&root) {
-            Ok(s) => f.write_str(&s),
-            Err(_) => Err(fmt::Error),
-        }
+fn deserialize_glob<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    struct GlobHelper {
+        glob: String,
     }
+
+    let helper = GlobHelper::deserialize(deserializer)?;
+
+    GlobBuilder::new(&helper.glob)
+        .build()
+        .map_err(|e| serde::de::Error::custom(e.to_string()))?;
+
+    Ok(helper.glob)
 }

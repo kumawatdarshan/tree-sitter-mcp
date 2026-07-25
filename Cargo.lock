@@ -1069,7 +1069,6 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "tree-sitter",
- "tree-sitter-language",
 ]
 
 [[package]]

@@ -1,9 +1,11 @@
 pub mod config;
-pub mod server;
+pub mod grammar;
+pub mod mcp;
 pub mod telemetry;
 
-use crate::server::TreeSitterServer;
-use crate::telemetry::init_tracing;
+use std::sync::Arc;
+
+use crate::{grammar::GrammarEngine, mcp::tools::TreeSitterServer, telemetry::init_tracing};
 use rmcp::ServiceExt;
 use tokio::io::{stdin, stdout};
 
@@ -12,9 +14,10 @@ async fn main() -> anyhow::Result<()> {
     init_tracing()?;
     tracing::info!("Starting Tree-Sitter MCP Server");
 
-    let transport = (stdin(), stdout());
+    let grammar = Arc::new(GrammarEngine::load_default()?);
+    let server = TreeSitterServer::new(grammar);
 
-    let server = TreeSitterServer::new();
+    let transport = (stdin(), stdout());
     let service = server.serve(transport).await?;
 
     service.waiting().await?;
