@@ -1,13 +1,11 @@
 use rmcp::{
-    ErrorData,
-    handler::server::wrapper::Parameters,
-    model::CallToolResult,
-    schemars, tool, tool_router,
+    ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
+    tool_router,
 };
 use serde::Deserialize;
 
 use crate::grammar::ByteRange;
-use crate::mcp::tools::{grammar_error, text_result};
+use crate::mcp::tools::text_result;
 
 #[tool_router(router = dump_ast_router, vis = "pub(crate)")]
 impl crate::TreeSitterServer {
@@ -27,14 +25,11 @@ impl crate::TreeSitterServer {
         &self,
         Parameters(params): Parameters<DumpAstParams>,
     ) -> Result<CallToolResult, ErrorData> {
-        let ast = self
-            .grammar
-            .dump_ast(
-                &params.path,
-                params.language.as_deref(),
-                params.range.as_ref(),
-            )
-            .map_err(grammar_error)?;
+        let ast = self.grammar.dump_ast(
+            &params.path,
+            params.language.as_deref(),
+            params.range.as_ref(),
+        )?;
 
         Ok(text_result(ast))
     }

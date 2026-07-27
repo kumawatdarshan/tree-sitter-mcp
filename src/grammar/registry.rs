@@ -1,7 +1,5 @@
 use std::path::Path;
 
-use globset::GlobBuilder;
-
 use crate::config::extension::ExtensionEntry;
 use crate::grammar::error::GrammarError;
 
@@ -25,8 +23,7 @@ impl LanguageEntry {
     pub(super) fn matches_path(&self, path: &Path) -> Result<bool, GrammarError> {
         for ext_entry in &self.extensions {
             if let ExtensionEntry::Glob { glob } = ext_entry {
-                let compiled = GlobBuilder::new(glob).literal_separator(true).build()?;
-                if compiled.compile_matcher().is_match(path) {
+                if glob.compile_matcher().is_match(path) {
                     return Ok(true);
                 }
             }
@@ -39,7 +36,7 @@ impl LanguageEntry {
             .iter()
             .map(|e| match e {
                 ExtensionEntry::Ext(s) => format!(".{s}"),
-                ExtensionEntry::Glob { glob } => format!("{{ {glob} }}"),
+                ExtensionEntry::Glob { glob } => format!("{{ {} }}", glob.glob()),
             })
             .collect()
     }

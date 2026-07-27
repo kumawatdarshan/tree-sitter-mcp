@@ -1,13 +1,11 @@
 use rmcp::{
-    ErrorData,
-    handler::server::wrapper::Parameters,
-    model::CallToolResult,
-    schemars, tool, tool_router,
+    ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
+    tool_router,
 };
 use serde::Deserialize;
 
 use crate::grammar::ByteRange;
-use crate::mcp::tools::{grammar_error, json_result};
+use crate::mcp::tools::json_result;
 
 #[tool_router(router = run_query_router, vis = "pub(crate)")]
 impl crate::TreeSitterServer {
@@ -27,15 +25,12 @@ impl crate::TreeSitterServer {
         &self,
         Parameters(params): Parameters<RunQueryParams>,
     ) -> Result<CallToolResult, ErrorData> {
-        let matches = self
-            .grammar
-            .run_query(
-                &params.path,
-                params.language.as_deref(),
-                &params.query,
-                params.range.as_ref(),
-            )
-            .map_err(grammar_error)?;
+        let matches = self.grammar.run_query(
+            &params.path,
+            params.language.as_deref(),
+            &params.query,
+            params.range.as_ref(),
+        )?;
 
         json_result(&matches, "query matches")
     }

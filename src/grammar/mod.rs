@@ -1,5 +1,6 @@
 pub(crate) mod error;
 pub(crate) mod find_node;
+pub(crate) mod loader;
 pub(crate) mod parser;
 pub(crate) mod query;
 pub(crate) mod registry;
@@ -10,12 +11,11 @@ pub use parser::{ByteRange, NodeInfo};
 pub use query::{Capture, QueryMatch};
 pub use registry::LanguageSummary;
 
+use self::loader::load_grammar;
+use registry::LanguageEntry;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-
 use tree_sitter::Node;
-
-use registry::LanguageEntry;
 
 pub struct GrammarEngine {
     entries: HashMap<String, LanguageEntry>,
@@ -24,20 +24,33 @@ pub struct GrammarEngine {
 impl GrammarEngine {
     pub fn load_default() -> Result<Self, GrammarError> {
         let ext_map = crate::config::load()?;
+        let grammar_dir = crate::config::grammar_dir()?;
 
-        let entries = ext_map
-            .into_iter()
-            .map(|(lang, extensions)| {
-                (
-                    lang.clone(),
-                    LanguageEntry {
-                        id: lang,
-                        language: None,
-                        extensions,
-                    },
-                )
-            })
-            .collect();
+        let mut entries = HashMap::new();
+
+        for (lang, extensions) in ext_map {
+            let so_path = grammar_dir.join(format!("{lang}.so"));
+            let language = if so_path.exists() {
+                match load_grammar(&so_path, &lang) {
+                    Ok(language) => Some(language),
+                    Err(e) => {
+                        tracing::warn!("skipping grammar {lang}: {e}");
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+
+            entries.insert(
+                lang.clone(),
+                LanguageEntry {
+                    id: lang,
+                    language,
+                    extensions,
+                },
+            );
+        }
 
         Ok(Self { entries })
     }

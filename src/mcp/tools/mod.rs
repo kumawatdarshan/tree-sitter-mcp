@@ -19,7 +19,7 @@ use rmcp::{
     tool_handler,
 };
 
-use crate::grammar::{GrammarEngine, GrammarError};
+use crate::grammar::GrammarEngine;
 
 #[derive(Clone)]
 pub struct TreeSitterServer {
@@ -60,20 +60,6 @@ pub(crate) fn json_result<T: serde::Serialize>(
         )
     })?;
     Ok(CallToolResult::success(vec![ContentBlock::text(json)]))
-}
-
-pub(crate) fn grammar_error(error: GrammarError) -> ErrorData {
-    let code = match &error {
-        GrammarError::UnknownLanguage { .. }
-        | GrammarError::LanguageInference { .. }
-        | GrammarError::SourceRead { .. }
-        | GrammarError::Query { .. }
-        | GrammarError::ByteOutOfBounds { .. } => ErrorCode::INVALID_PARAMS,
-
-        _ => ErrorCode::INTERNAL_ERROR,
-    };
-
-    ErrorData::new(code, error.to_string(), None)
 }
 
 #[tool_handler(router = self.tool_router)]

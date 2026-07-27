@@ -2,7 +2,7 @@
 rust = ["rs"]
 sway = ["sw"]
 toml = [
-    "toml",
+  "toml",
   { glob = "pdm.lock" },
   { glob = "poetry.lock" },
   { glob = "Cargo.lock" },
@@ -27,7 +27,7 @@ mint = ["mint"]
 mojo = ["mojo", "🔥"]
 janet = ["cgen", "janet", "jdn"]
 json = [
-    "json",
+  "json",
   "arb",
   "ipynb",
   "geojson",
@@ -63,13 +63,13 @@ json = [
   "sublime-workspace",
   "code-workspace",
   { glob = ".pytest_cache/v/cache/*" }, # https://docs.pytest.org/en/latest/reference/reference.html#confval-cache_dir
-  { glob = "devenv.lock" }, # https://devenv.sh/
-  { glob = "devbox.lock" }, # https://www.jetify.com/docs/devbox/
-  { glob = "manifest.lock" }, # https://flox.dev/docs/
-  { glob = "deno.lock" }, # https://deno.com/
+  { glob = "devenv.lock" },             # https://devenv.sh/
+  { glob = "devbox.lock" },             # https://www.jetify.com/docs/devbox/
+  { glob = "manifest.lock" },           # https://flox.dev/docs/
+  { glob = "deno.lock" },               # https://deno.com/
 ]
 jsonc = [
-    "jsonc",
+  "jsonc",
   { glob = "{t,j}sconfig.json" },
   { glob = "bun.lock" },
   { glob = ".devcontainer.json" },
@@ -79,17 +79,51 @@ jsonc = [
 json-ld = ["jsonld"]
 json5 = ["json5"]
 c = ["c"]
-cpp = ["cc", "hh", "c++", "cpp", "hpp", "h", "ipp", "tpp", "cxx", "hxx", "ixx", "txx", "ino", "C", "H", "cu", "cuh", "cppm", "h++", "ii", "inl", { glob = ".hpp.in" }, { glob = ".h.in" }]
+cpp = [
+  "cc",
+  "hh",
+  "c++",
+  "cpp",
+  "hpp",
+  "h",
+  "ipp",
+  "tpp",
+  "cxx",
+  "hxx",
+  "ixx",
+  "txx",
+  "ino",
+  "C",
+  "H",
+  "cu",
+  "cuh",
+  "cppm",
+  "h++",
+  "ii",
+  "inl",
+  { glob = ".hpp.in" },
+  { glob = ".h.in" },
+]
 crystal = ["cr"]
 c-sharp = ["cs", "csx", "cake"]
-c3 = [ "c3", "c3i", "c3t" ]
+c3 = ["c3", "c3i", "c3t"]
 cel = ["cel"]
 spicedb = ["zed"]
 go = ["go"]
 gomod = [{ glob = "go.mod" }]
 gotmpl = ["gotmpl"]
 gowork = [{ glob = "go.work" }]
-javascript = ["js", "mjs", "cjs", "rules", "es6", "pac", "gs", { glob = ".node_repl_history" }, { glob = "jakefile" }]
+javascript = [
+  "js",
+  "mjs",
+  "cjs",
+  "rules",
+  "es6",
+  "pac",
+  "gs",
+  { glob = ".node_repl_history" },
+  { glob = "jakefile" },
+]
 
 jsx = ["jsx"]
 typescript = ["ts", "mts", "cts"]
@@ -98,12 +132,41 @@ tsx = ["tsx"]
 css = ["css"]
 scss = ["scss"]
 less = ["less"]
-html = ["html", "htm", "shtml", "xhtml", "xht", "jsp", "asp", "aspx", "jshtm", "volt", "rhtml", "cshtml"]
-python = ["py", "pyi", "py3", "pyw", "ptl", "rpy", "cpy", "ipy", "pyt", { glob = ".python_history" }, { glob = ".pythonstartup" }, { glob = ".pythonrc" }, { glob = "*SConstruct" }, { glob = "*SConscript" }, { glob = "*sconstruct" }]
+html = [
+  "html",
+  "htm",
+  "shtml",
+  "xhtml",
+  "xht",
+  "jsp",
+  "asp",
+  "aspx",
+  "jshtm",
+  "volt",
+  "rhtml",
+  "cshtml",
+]
+python = [
+  "py",
+  "pyi",
+  "py3",
+  "pyw",
+  "ptl",
+  "rpy",
+  "cpy",
+  "ipy",
+  "pyt",
+  { glob = ".python_history" },
+  { glob = ".pythonstartup" },
+  { glob = ".pythonrc" },
+  { glob = "*SConstruct" },
+  { glob = "*SConscript" },
+  { glob = "*sconstruct" },
+]
 nickel = ["ncl"]
 nix = ["nix"]
 ruby = [
-    "rb",
+  "rb",
   "rake",
   "irb",
   "gemspec",
@@ -115,35 +178,35 @@ ruby = [
   "rbi",
   "rbs",
   { glob = "rakefile" },
-    { glob = "gemfile" },
-    { glob = "Rakefile" },
-    { glob = "Gemfile" },
-    { glob = "Podfile" },
-    { glob = "Vagrantfile" },
-    { glob = "Brewfile" },
-    { glob = "*.Brewfile" },
-    { glob = "Guardfile" },
-    { glob = "Capfile" },
-    { glob = "Cheffile" },
-    { glob = "Hobofile" },
-    { glob = "Appraisals" },
+  { glob = "gemfile" },
+  { glob = "Rakefile" },
+  { glob = "Gemfile" },
+  { glob = "Podfile" },
+  { glob = "Vagrantfile" },
+  { glob = "Brewfile" },
+  { glob = "*.Brewfile" },
+  { glob = "Guardfile" },
+  { glob = "Capfile" },
+  { glob = "Cheffile" },
+  { glob = "Hobofile" },
+  { glob = "Appraisals" },
   { glob = "Rantfile" },
-    { glob = "Berksfile" },
-    { glob = "Berksfile.lock" },
-    { glob = "Thorfile" },
-    { glob = "Puppetfile" },
-    { glob = "Fastfile" },
-    { glob = "Appfile" },
-    { glob = "Deliverfile" },
-    { glob = "Matchfile" },
-    { glob = "Scanfile" },
-    { glob = "Snapfile" },
-    { glob = "Gymfile" },
-    { glob = ".irbrc" },
+  { glob = "Berksfile" },
+  { glob = "Berksfile.lock" },
+  { glob = "Thorfile" },
+  { glob = "Puppetfile" },
+  { glob = "Fastfile" },
+  { glob = "Appfile" },
+  { glob = "Deliverfile" },
+  { glob = "Matchfile" },
+  { glob = "Scanfile" },
+  { glob = "Snapfile" },
+  { glob = "Gymfile" },
+  { glob = ".irbrc" },
 ]
 rshtml = [{ glob = "*.rs.html" }]
 bash = [
-    "sh",
+  "sh",
   "bash",
   "ash",
   "dash",
@@ -154,7 +217,7 @@ bash = [
   "zlogin",
   "zlogout",
   "zprofile",
-    "zshrc",
+  "zshrc",
   "eclass",
   "ebuild",
   "bazelrc",
@@ -173,13 +236,13 @@ bash = [
   { glob = ".bash_login" },
   { glob = ".bash_logout" },
   { glob = ".bash_profile" },
-    { glob = ".bashrc" },
+  { glob = ".bashrc" },
   { glob = ".profile" },
-    { glob = ".zshenv" },
+  { glob = ".zshenv" },
   { glob = ".zlogin" },
   { glob = ".zlogout" },
   { glob = ".zprofile" },
-    { glob = ".zshrc" },
+  { glob = ".zshrc" },
   { glob = ".zimrc" },
   { glob = "APKBUILD" },
   { glob = ".bash_aliases" },
@@ -188,16 +251,16 @@ bash = [
   { glob = "bash_completion.d/*" },
   { glob = ".Renviron" },
   { glob = ".xprofile" },
-    { glob = ".xsession" },
+  { glob = ".xsession" },
   { glob = ".xsessionrc" },
   { glob = ".yashrc" },
   { glob = ".yash_profile" },
-    { glob = ".hushlogin" },
-  { glob = ".xinitrc" }, # ~/.xinitrc
-  { glob = "xinitrc" }, # /etc/X11/xinit/xinitrc
-  { glob = ".xserverrc" }, # ~/.xserverrc
-  { glob = "xserverrc" }, # /etc/X11/xinit/xserverrc
-  { glob = "direnvrc" }, # ~/.config/direnv/direnvrc
+  { glob = ".hushlogin" },
+  { glob = ".xinitrc" },                      # ~/.xinitrc
+  { glob = "xinitrc" },                       # /etc/X11/xinit/xinitrc
+  { glob = ".xserverrc" },                    # ~/.xserverrc
+  { glob = "xserverrc" },                     # /etc/X11/xinit/xserverrc
+  { glob = "direnvrc" },                      # ~/.config/direnv/direnvrc
 ]
 php = ["php", "inc", "php4", "php5", "phtml", "ctp"]
 blade = [{ glob = "*.blade.php" }, "blade"]
@@ -219,7 +282,7 @@ teal = ["tl"]
 svelte = ["svelte"]
 vue = ["vue"]
 yaml = [
-    "yml",
+  "yml",
   "yaml",
   { glob = ".prettierrc" },
   { glob = ".clangd" },
@@ -231,8 +294,8 @@ yaml = [
   { glob = "yarn.lock" },
   "sublime-syntax",
   "bu",
-  { glob = ".stylelintrc" },  # https://stylelint.io/user-guide/configure/
-  { glob = ".puppeteerrc" },  # https://pptr.dev/guides/configuration
+  { glob = ".stylelintrc" },     # https://stylelint.io/user-guide/configure/
+  { glob = ".puppeteerrc" },     # https://pptr.dev/guides/configuration
 ]
 nestedtext = ["nt"]
 haskell = ["hs", "hs-boot", "hsc"]
@@ -242,13 +305,29 @@ purescript = ["purs"]
 zig = ["zig", "zon"]
 picat = ["pi", "picat"]
 prolog = ["pl", "prolog"]
-tsq = [{ glob = "queries/*.scm" }, { glob = "injections.scm" },  { glob = "highlights.scm" },  { glob = "indents.scm" },  { glob = "textobjects.scm" },  { glob = "locals.scm" },  { glob = "tags.scm" }]
+tsq = [
+  { glob = "queries/*.scm" },
+  { glob = "injections.scm" },
+  { glob = "highlights.scm" },
+  { glob = "indents.scm" },
+  { glob = "textobjects.scm" },
+  { glob = "locals.scm" },
+  { glob = "tags.scm" },
+]
 cmake = ["cmake", { glob = "CMakeLists.txt" }]
-make = [{ glob = "Makefile" }, { glob = "makefile" }, "make", "mk", "mak", {glob = "GNUmakefile" }, { glob = "OCamlMakefile" }]
-glsl = ["glsl", "vert", "tesc", "tese", "geom", "frag", "comp" ]
+make = [
+  { glob = "Makefile" },
+  { glob = "makefile" },
+  "make",
+  "mk",
+  "mak",
+  { glob = "GNUmakefile" },
+  { glob = "OCamlMakefile" },
+]
+glsl = ["glsl", "vert", "tesc", "tese", "geom", "frag", "comp"]
 penrose = ["substance", "style", "domain"]
 perl = [
-    "pl",
+  "pl",
   "pm",
   "t",
   "psgi",
@@ -260,8 +339,8 @@ perl = [
   "p6",
   "pl6",
   "pm6",
-  {glob = "latexmkrc"},
-  {glob = ".latexmkrc"},
+  { glob = "latexmkrc" },
+  { glob = ".latexmkrc" },
 ]
 embedded-perl = ["ep", { glob = "*.html.ep" }]
 pod = ["pod"]
@@ -273,39 +352,94 @@ llvm = ["ll"]
 llvm-mir-yaml = ["mir"]
 tablegen = ["td"]
 mail = ["eml"]
-markdown = ["md", "livemd", "markdown", "mdx", "mkd", "mkdn", "mdwn", "mdown", "markdn", "mdtxt", "mdtext", "workbook", { glob = "PULLREQ_EDITMSG" }]
+markdown = [
+  "md",
+  "livemd",
+  "markdown",
+  "mdx",
+  "mkd",
+  "mkdn",
+  "mdwn",
+  "mdown",
+  "markdn",
+  "mdtxt",
+  "mdtext",
+  "workbook",
+  { glob = "PULLREQ_EDITMSG" },
+]
 djot = ["dj", "djot"]
 dart = ["dart"]
 scala = ["scala", "sbt", "sc"]
 dockerfile = [
-    "Dockerfile",
-    { glob = "Dockerfile" },
-    { glob = "Dockerfile.*" },
-    "dockerfile",
-    { glob = "dockerfile" },
-    { glob = "dockerfile.*" },
-    "Containerfile",
-    { glob = "Containerfile" },
-    { glob = "Containerfile.*" },
-    "containerfile",
-    { glob = "containerfile" },
-    { glob = "containerfile.*" },
+  "Dockerfile",
+  { glob = "Dockerfile" },
+  { glob = "Dockerfile.*" },
+  "dockerfile",
+  { glob = "dockerfile" },
+  { glob = "dockerfile.*" },
+  "Containerfile",
+  { glob = "Containerfile" },
+  { glob = "Containerfile.*" },
+  "containerfile",
+  { glob = "containerfile" },
+  { glob = "containerfile.*" },
 ]
-docker-compose = [{ glob = "docker-compose.yaml" }, { glob = "docker-compose.yml" }, { glob = "compose.yaml" }, { glob = "compose.yml" }]
-git-commit = [{ glob = "COMMIT_EDITMSG" }, { glob = "MERGE_MSG" }, { glob = "TAG_EDITMSG" }]
+docker-compose = [
+  { glob = "docker-compose.yaml" },
+  { glob = "docker-compose.yml" },
+  { glob = "compose.yaml" },
+  { glob = "compose.yml" },
+]
+git-commit = [
+  { glob = "COMMIT_EDITMSG" },
+  { glob = "MERGE_MSG" },
+  { glob = "TAG_EDITMSG" },
+]
 git-notes = [{ glob = "NOTES_EDITMSG" }, { glob = "EDIT_DESCRIPTION" }]
-github-action = [{ glob = ".github/workflows/*.yaml" }, { glob = ".github/workflows/*.yml" }]
+github-action = [
+  { glob = ".github/workflows/*.yaml" },
+  { glob = ".github/workflows/*.yml" },
+]
 diff = ["diff", "patch", "rej"]
 git-rebase = [{ glob = "git-rebase-todo" }]
 regex = ["regex", { glob = ".Rbuildignore" }]
-git-config = ["gitconfig", { glob = ".gitmodules" }, { glob = "gitconfig" }, { glob = ".gitconfig" }, { glob = ".git/config" }, { glob = ".config/git/config" }, { glob = ".git/modules/*/config" }, { glob = "config.worktree" }]
-git-attributes = [{ glob = ".gitattributes" }, { glob = ".config/git/attributes" }]
-git-ignore = [{ glob = ".gitignore_global" }, { glob = "git/ignore" }, { glob = ".git/info/exclude" }, { glob = ".ignore" }, { glob = "CODEOWNERS" }, { glob = ".config/helix/ignore" }, { glob = ".helix/ignore" }, { glob = ".*ignore" }, { glob = ".git-blame-ignore-revs" }]
+git-config = [
+  "gitconfig",
+  { glob = ".gitmodules" },
+  { glob = "gitconfig" },
+  { glob = ".gitconfig" },
+  { glob = ".git/config" },
+  { glob = ".config/git/config" },
+  { glob = ".git/modules/*/config" },
+  { glob = "config.worktree" },
+]
+git-attributes = [
+  { glob = ".gitattributes" },
+  { glob = ".config/git/attributes" },
+]
+git-ignore = [
+  { glob = ".gitignore_global" },
+  { glob = "git/ignore" },
+  { glob = ".git/info/exclude" },
+  { glob = ".ignore" },
+  { glob = "CODEOWNERS" },
+  { glob = ".config/helix/ignore" },
+  { glob = ".helix/ignore" },
+  { glob = ".*ignore" },
+  { glob = ".git-blame-ignore-revs" },
+]
 graphql = ["gql", "graphql", "graphqls"]
 elm = ["elm"]
 iex = ["iex"]
 rescript = ["res"]
-erlang = ["erl", "hrl", "app", { glob = "rebar.config" }, { glob = "rebar.lock" }, { glob = "*.app.src" }]
+erlang = [
+  "erl",
+  "hrl",
+  "app",
+  { glob = "rebar.config" },
+  { glob = "rebar.lock" },
+  { glob = "*.app.src" },
+]
 kotlin = ["kt", "kts"]
 hcl = ["hcl", "tf", "nomad"]
 tfvars = ["tfvars"]
@@ -315,7 +449,13 @@ gleam = ["gleam"]
 quarto = ["qmd"]
 ron = ["ron"]
 robot = ["robot", "resource"]
-r = ["r", "R", { glob = ".Rprofile" }, { glob = "Rprofile.site" }, { glob = ".RHistory" }]
+r = [
+  "r",
+  "R",
+  { glob = ".Rprofile" },
+  { glob = "Rprofile.site" },
+  { glob = ".RHistory" },
+]
 rmarkdown = ["rmd", "Rmd"]
 swift = ["swift", "swiftinterface"]
 erb = ["erb"]
@@ -332,8 +472,16 @@ devicetree = ["dts", "dtsi"]
 cairo = ["cairo"]
 cpon = ["cpon", "cp"]
 odin = ["odin"]
-meson = [{ glob = "meson.build" }, { glob = "meson.options" }, { glob = "meson_options.txt" }]
-sshclientconfig = [{ glob = ".ssh/config" }, { glob = "/etc/ssh/ssh_config" }, { glob = "ssh_config.d/*.conf" } ]
+meson = [
+  { glob = "meson.build" },
+  { glob = "meson.options" },
+  { glob = "meson_options.txt" },
+]
+sshclientconfig = [
+  { glob = ".ssh/config" },
+  { glob = "/etc/ssh/ssh_config" },
+  { glob = "ssh_config.d/*.conf" },
+]
 scheme = ["ss", "scm", "sld"]
 v = ["v", "vv", "vsh"]
 verilog = ["v", "vh"]
@@ -343,7 +491,17 @@ jsdoc = ["jsdoc"]
 openscad = ["scad"]
 prisma = ["prisma"]
 clojure = ["clj", "cljs", "cljc", "clje", "cljr", "cljx", "edn", "boot"]
-starlark = ["bzl", "bazel", "star", { glob = "BUILD" }, { glob = "BUCK" }, { glob = "BUILD.*" }, { glob = "WORKSPACE" }, { glob = "WORKSPACE.bzlmod" }, { glob = "PACKAGE" }]
+starlark = [
+  "bzl",
+  "bazel",
+  "star",
+  { glob = "BUILD" },
+  { glob = "BUCK" },
+  { glob = "BUILD.*" },
+  { glob = "WORKSPACE" },
+  { glob = "WORKSPACE.bzlmod" },
+  { glob = "PACKAGE" },
+]
 elvish = ["elv"]
 idris = ["idr"]
 fortran = ["f", "for", "f90", "f95", "f03", "F", "F90", "F95", "F03"]
@@ -363,11 +521,11 @@ astro = ["astro"]
 bass = ["bass"]
 wat = ["wat"]
 wast = ["wast"]
-d = [ "d", "dd" ]
+d = ["d", "dd"]
 vhs = ["tape"]
 kdl = ["kdl"]
 xml = [
-    "ascx",
+  "ascx",
   "atom",
   "axaml",
   "axml",
@@ -449,19 +607,19 @@ xml = [
 dtd = ["dtd", "ent"]
 wit = ["wit"]
 env = [
-    { glob = ".env" },
+  { glob = ".env" },
   { glob = ".env.*" },
   { glob = ".envrc" },
   { glob = ".envrc.*" },
-  { glob = "_environment" }, # https://quarto.org/docs/projects/environment.html#environment-file
-    { glob = "_environment-*" }, # https://quarto.org/docs/projects/environment.html#profile-environments
-    { glob = "_environment.local" }, # https://quarto.org/docs/projects/environment.html#local-environment
+  { glob = "_environment" },          # https://quarto.org/docs/projects/environment.html#environment-file
+  { glob = "_environment-*" },        # https://quarto.org/docs/projects/environment.html#profile-environments
+  { glob = "_environment.local" },    # https://quarto.org/docs/projects/environment.html#local-environment
   { glob = "_environment.required" }, # https://quarto.org/docs/projects/environment.html#required-variables
-  { glob = ".bazeliskrc" }, # https://github.com/bazelbuild/bazelisk#bazeliskrc-configuration-file
-  ]
+  { glob = ".bazeliskrc" },           # https://github.com/bazelbuild/bazelisk#bazeliskrc-configuration-file
+]
 systemd = [
-    # Systemd unit files
-    "service",
+  # Systemd unit files
+  "service",
   "automount",
   "device",
   "mount",
@@ -476,7 +634,7 @@ systemd = [
   { glob = "systemd/**/*.conf" },
 ]
 ini = [
-    "ini",
+  "ini",
   "desktop",
   { glob = "mimeapps.list" },
   # Podman quadlets
@@ -496,7 +654,7 @@ ini = [
   { glob = ".wslconfig" },
 ]
 inko = ["inko"]
-bicep = ["bicep","bicepparam"]
+bicep = ["bicep", "bicepparam"]
 qml = ["qml"]
 mermaid = ["mermaid", "mmd"]
 matlab = ["m"]
@@ -520,11 +678,17 @@ hdl = ["hdl"]
 vhdl = ["vhd", "vhdl"]
 rego = ["rego"]
 nim = ["nim", "nims", "nimble"]
-cabal = [ "cabal" ]
+cabal = ["cabal"]
 hurl = ["hurl"]
 markdoc = ["mdoc"]
 opencl = ["cl"]
-just = ["just", { glob = "justfile" }, { glob = "Justfile" }, { glob = ".justfile" }, { glob = ".Justfile" }]
+just = [
+  "just",
+  { glob = "justfile" },
+  { glob = "Justfile" },
+  { glob = ".justfile" },
+  { glob = ".Justfile" },
+]
 gn = ["gn", "gni"]
 blueprint = ["blp"]
 forth = ["fs", "forth", "fth", "4th"]
@@ -534,7 +698,11 @@ webc = ["webc"]
 typst = ["typst", "typ"]
 nunjucks = ["njk"]
 jinja = ["jinja", "jinja2", "j2"]
-jjconfig = [{ glob = "jj/config.toml" }, { glob = "jj/**/*.toml" }, { glob = ".jj/repo/*.toml" }]
+jjconfig = [
+  { glob = "jj/config.toml" },
+  { glob = "jj/**/*.toml" },
+  { glob = ".jj/repo/*.toml" },
+]
 jjdescription = [{ glob = "*.jjdescription" }]
 jjrevset = ["jjrevset"]
 jjtemplate = ["jjtemplate"]
@@ -557,7 +725,14 @@ gemini = ["gmi"]
 agda = ["agda"]
 templ = ["templ"]
 dbml = ["dbml"]
-bitbake = ["bb", "bbappend", "bbclass", { glob = "conf/*.conf" }, { glob = "conf/*/*.{inc,conf}" }, { glob = "recipe-*/*/*.inc" }]
+bitbake = [
+  "bb",
+  "bbappend",
+  "bbclass",
+  { glob = "conf/*.conf" },
+  { glob = "conf/*/*.{inc,conf}" },
+  { glob = "recipe-*/*/*.inc" },
+]
 log = ["log"]
 hoon = ["hoon"]
 hocon = [
@@ -568,7 +743,13 @@ hocon = [
 koka = ["kk"]
 tact = ["tact"]
 pkl = ["pkl", "pcf", { glob = "PklProject" }]
-groovy = ["groovy", "gradle", "jenkinsfile", { glob = "Jenkinsfile" }, { glob = "Jenkinsfile.*" }]
+groovy = [
+  "groovy",
+  "gradle",
+  "jenkinsfile",
+  { glob = "Jenkinsfile" },
+  { glob = "Jenkinsfile.*" },
+]
 fidl = ["fidl"]
 powershell = ["ps1", "psm1", "psd1", "pscc", "psrc"]
 ld = ["ld"]
@@ -578,7 +759,12 @@ tcl = ["tcl"]
 supercollider = ["scd", "sc", "quark"]
 rpmspec = ["spec"]
 pkgbuild = [{ glob = "PKGBUILD" }]
-helm = [{ glob = "templates/*.yaml" }, { glob = "templates/*.yml" }, { glob = "templates/_*.tpl" }, { glob = "templates/NOTES.txt" }]
+helm = [
+  { glob = "templates/*.yaml" },
+  { glob = "templates/*.yml" },
+  { glob = "templates/_*.tpl" },
+  { glob = "templates/NOTES.txt" },
+]
 glimmer = [{ glob = "{app,addon}/{components,templates}/*.hbs" }]
 ohm = ["ohm"]
 earthfile = [{ glob = "Earthfile" }]
@@ -600,7 +786,12 @@ amber = ["ab"]
 koto = ["koto"]
 gpr = ["gpr"]
 vento = ["vto"]
-nginx = [{ glob = "sites-available/*.conf" }, { glob = "sites-enabled/*.conf" }, { glob = "nginx.conf" }, { glob = "conf.d/*.conf" }]
+nginx = [
+  { glob = "sites-available/*.conf" },
+  { glob = "sites-enabled/*.conf" },
+  { glob = "nginx.conf" },
+  { glob = "conf.d/*.conf" },
+]
 codeql = ["ql", "qll"]
 gren = ["gren"]
 ghostty = ["ghostty", { glob = "ghostty/config" }]
@@ -613,12 +804,24 @@ sourcepawn = ["sp", "inc"]
 vim = ["vim", { glob = ".vimrc" }, { glob = ".nvimrc" }, { glob = ".exrc" }]
 tlaplus = ["tla"]
 werk = ["werk", { glob = "Werkfile" }]
-debian = ["dsc", "changes", { glob = "debian/**/control" }, { glob = "etc/apt/sources.list.d/*.sources" }]
+debian = [
+  "dsc",
+  "changes",
+  { glob = "debian/**/control" },
+  { glob = "etc/apt/sources.list.d/*.sources" },
+]
 dunstrc = [{ glob = "dunst/dunstrc" }]
 clarity = ["clar"]
 alloy = ["als"]
 luau = ["luau"]
-caddyfile = ["Caddyfile", { glob = "Caddyfile" }, { glob = "Caddyfile.*" }, "caddyfile", { glob = "caddyfile" }, { glob = "caddyfile.*" }]
+caddyfile = [
+  "Caddyfile",
+  { glob = "Caddyfile" },
+  { glob = "Caddyfile.*" },
+  "caddyfile",
+  { glob = "caddyfile" },
+  { glob = "caddyfile.*" },
+]
 properties = ["properties", "prefs"]
 robots = [{ glob = "robots.txt" }]
 pip-requirements = [{ glob = "requirements.txt" }, { glob = "constraints.txt" }]
@@ -629,7 +832,10 @@ git-cliff-config = [{ glob = "cliff.toml" }]
 cython = ["pxd", "pxi", "pyx"]
 shellcheckrc = [{ glob = "shellcheckrc" }, { glob = ".shellcheckrc" }]
 strictdoc = ["sdoc", "sgra"]
-docker-bake = [{ glob = "docker-bake.hcl" }, { glob = "docker-bake.override.hcl" }]
+docker-bake = [
+  { glob = "docker-bake.hcl" },
+  { glob = "docker-bake.override.hcl" },
+]
 gitlab-ci = [{ glob = ".gitlab-ci.yml" }]
 wikitext = ["wikimedia", "mediawiki", "wikitext"]
 slisp = ["sl"]
@@ -641,7 +847,11 @@ basic = ["bas"]
 freebasic = ["bas", "bi"]
 scfg = ["scfg"]
 ripple = [{ glob = "kanshi/config" }]
-woodpecker-ci = [{ glob = ".woodpecker.yaml" }, { glob = ".woodpecker/*.yaml" }, { glob = ".woodpecker/*.yml" }]
+woodpecker-ci = [
+  { glob = ".woodpecker.yaml" },
+  { glob = ".woodpecker/*.yaml" },
+  { glob = ".woodpecker/*.yml" },
+]
 chuck = [{ glob = "*.ck" }]
 qmv = [{ glob = "/tmp/qmv*" }]
 klog = ["klg"]
