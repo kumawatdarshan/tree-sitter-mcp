@@ -14,12 +14,22 @@ use rmcp::{
         ListResourcesResult, PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult,
         Resource, ResourceContents, ResourceTemplate, ServerCapabilities,
     },
-    prompt_handler,
+    prompt_handler, schemars,
     service::RequestContext,
     tool_handler,
 };
+use serde::Deserialize;
 
 use crate::grammar::GrammarEngine;
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct FileParams {
+    #[schemars(description = "workspace-relative path to the source file")]
+    pub path: String,
+
+    #[schemars(description = "Language id. Inferred from the file extension if omitted.")]
+    pub language: Option<String>,
+}
 
 #[derive(Clone, Debug)]
 pub struct TreeSitterServer {

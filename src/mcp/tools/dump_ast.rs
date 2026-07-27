@@ -5,7 +5,7 @@ use rmcp::{
 use serde::Deserialize;
 
 use crate::grammar::ByteRange;
-use crate::mcp::tools::text_result;
+use crate::mcp::tools::{FileParams, text_result};
 
 #[tool_router(router = dump_ast_router, vis = "pub(crate)")]
 impl crate::TreeSitterServer {
@@ -26,8 +26,8 @@ impl crate::TreeSitterServer {
         Parameters(params): Parameters<DumpAstParams>,
     ) -> Result<CallToolResult, ErrorData> {
         let ast = self.grammar.dump_ast(
-            &params.path,
-            params.language.as_deref(),
+            &params.file.path,
+            params.file.language.as_deref(),
             params.range.as_ref(),
         )?;
 
@@ -37,13 +37,8 @@ impl crate::TreeSitterServer {
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DumpAstParams {
-    #[schemars(description = "Absolute or workspace-relative path to the source file")]
-    pub path: String,
-
-    #[schemars(
-        description = "Language id (e.g. 'rust', 'python', 'typescript', 'tsx', 'javascript'). Inferred from the file extension if omitted."
-    )]
-    pub language: Option<String>,
+    #[serde(flatten)]
+    pub file: FileParams,
 
     #[schemars(
         description = "Restrict the dump to the smallest node covering this byte range, instead of the whole file"

@@ -32,6 +32,12 @@ impl LanguageEntry {
         self.language.is_some()
     }
 
+    pub(super) fn language(&self) -> Result<&tree_sitter::Language, GrammarError> {
+        self.language
+            .as_ref()
+            .ok_or_else(|| GrammarError::GrammarNotLoaded(self.id.clone()))
+    }
+
     pub(super) fn matches_extension(&self, ext: &str) -> bool {
         self.extensions
             .iter()
@@ -100,32 +106,16 @@ impl From<&LanguageEntry> for LanguageSummary {
 }
 
 #[cfg(test)]
+pub(crate) fn entry(id: &str, extensions: &[ExtensionEntry]) -> LanguageEntry {
+    LanguageEntry::new(id, None, extensions.to_vec())
+}
+
+#[cfg(test)]
 mod tests {
+    use crate::config::extension::{ext, glob};
+
     use super::*;
-    use crate::config::extension::ExtensionEntry;
-    use globset::GlobBuilder;
     use std::path::Path;
-
-    fn ext(s: &str) -> ExtensionEntry {
-        ExtensionEntry::Ext(s.to_string())
-    }
-
-    fn glob(pattern: &str) -> ExtensionEntry {
-        ExtensionEntry::Glob {
-            glob: GlobBuilder::new(pattern)
-                .literal_separator(true)
-                .build()
-                .unwrap(),
-        }
-    }
-
-    fn entry(id: &str, extensions: &[ExtensionEntry]) -> LanguageEntry {
-        LanguageEntry {
-            id: id.to_string(),
-            language: None,
-            extensions: extensions.to_vec(),
-        }
-    }
 
     #[test]
     fn matches_path_for_exact_filename_glob() {

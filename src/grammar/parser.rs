@@ -23,11 +23,13 @@ pub struct NodeInfo {
 
 impl fmt::Display for NodeInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let truncated: String = self.text.chars().take(50).collect();
         write!(
             f,
             "{}@{}..{}: {}",
-            self.kind, self.start_byte, self.end_byte, truncated
+            self.kind,
+            self.start_byte,
+            self.end_byte,
+            truncated_text(&self.text)
         )
     }
 }
@@ -42,6 +44,10 @@ pub(crate) fn node_text(node: Node<'_>, source: &str) -> String {
     node.utf8_text(source.as_bytes())
         .unwrap_or("<invalid utf8>")
         .to_string()
+}
+
+pub(crate) fn truncated_text(text: &str) -> String {
+    text.chars().take(50).collect()
 }
 
 impl<'a> From<(Node<'a>, &'a str)> for NodeInfo {
@@ -72,10 +78,7 @@ impl super::GrammarEngine {
         entry: &LanguageEntry,
         path: &str,
     ) -> Result<(String, tree_sitter::Tree), GrammarError> {
-        let lang = entry
-            .language
-            .as_ref()
-            .ok_or_else(|| GrammarError::GrammarNotLoaded(entry.id.clone()))?;
+        let lang = entry.language()?;
 
         let source = std::fs::read_to_string(path)
             .map_err(|e| GrammarError::SourceRead(std::path::PathBuf::from(path), e))?;

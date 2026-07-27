@@ -3,7 +3,7 @@ use serde::Serialize;
 use std::fmt;
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
-use crate::grammar::{apply_range, error::GrammarError, parser::NodeInfo};
+use crate::grammar::{apply_range, error::GrammarError, parser::{NodeInfo, truncated_text}};
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct Capture {
@@ -19,11 +19,13 @@ pub struct QueryMatch {
 
 impl fmt::Display for Capture {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let truncated: String = self.node.text.chars().take(50).collect();
         write!(
             f,
             "{}@{}..{}: {}",
-            self.name, self.node.start_byte, self.node.end_byte, truncated
+            self.name,
+            self.node.start_byte,
+            self.node.end_byte,
+            truncated_text(&self.node.text)
         )
     }
 }
@@ -50,10 +52,7 @@ impl super::GrammarEngine {
         let (source, tree) = self.load_tree_for_entry(entry, path)?;
         let root = apply_range(tree.root_node(), range);
 
-        let lang = entry
-            .language
-            .as_ref()
-            .ok_or_else(|| GrammarError::GrammarNotLoaded(entry.id.clone()))?;
+        let lang = entry.language()?;
 
         let query = Query::new(lang, query_str)?;
 

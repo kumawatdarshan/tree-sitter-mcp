@@ -107,7 +107,24 @@ impl fmt::Display for ExtensionEntry {
 }
 
 #[cfg(test)]
+pub(crate) fn ext(s: &str) -> ExtensionEntry {
+    ExtensionEntry::Ext(s.to_string())
+}
+
+#[cfg(test)]
+pub(crate) fn glob(pattern: &str) -> ExtensionEntry {
+    use globset::GlobBuilder;
+    ExtensionEntry::Glob {
+        glob: GlobBuilder::new(pattern)
+            .literal_separator(true)
+            .build()
+            .unwrap(),
+    }
+}
+
+#[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]

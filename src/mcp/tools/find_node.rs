@@ -4,7 +4,7 @@ use rmcp::{
 };
 use serde::Deserialize;
 
-use crate::mcp::tools::json_result;
+use crate::mcp::tools::{FileParams, json_result};
 
 #[tool_router(router = find_node_router, vis = "pub(crate)")]
 impl crate::TreeSitterServer {
@@ -24,9 +24,11 @@ impl crate::TreeSitterServer {
         &self,
         Parameters(params): Parameters<FindNodeParams>,
     ) -> Result<CallToolResult, ErrorData> {
-        let result =
-            self.grammar
-                .find_node(&params.path, params.language.as_deref(), params.byte)?;
+        let result = self.grammar.find_node(
+            &params.file.path,
+            params.file.language.as_deref(),
+            params.byte,
+        )?;
 
         json_result(&result, "node info")
     }
@@ -34,11 +36,8 @@ impl crate::TreeSitterServer {
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct FindNodeParams {
-    #[schemars(description = "Absolute or workspace-relative path to the source file")]
-    pub path: String,
-
-    #[schemars(description = "Language id. Inferred from the file extension if omitted.")]
-    pub language: Option<String>,
+    #[serde(flatten)]
+    pub file: FileParams,
 
     #[schemars(description = "Byte offset into the file to locate")]
     pub byte: usize,

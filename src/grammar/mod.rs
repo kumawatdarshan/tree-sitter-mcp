@@ -157,30 +157,15 @@ pub(crate) fn apply_range<'a>(root: Node<'a>, range: Option<&ByteRange>) -> Node
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::extension::ExtensionEntry;
-    use globset::GlobBuilder;
-
-    fn ext(s: &str) -> ExtensionEntry {
-        ExtensionEntry::Ext(s.to_string())
-    }
-
-    fn glob(pattern: &str) -> ExtensionEntry {
-        ExtensionEntry::Glob {
-            glob: GlobBuilder::new(pattern)
-                .literal_separator(true)
-                .build()
-                .unwrap(),
-        }
-    }
-
-    fn language(id: &str, extensions: &[ExtensionEntry]) -> LanguageEntry {
-        LanguageEntry::new(id, None, extensions.iter().cloned())
-    }
+    use crate::{
+        config::extension::{ExtensionEntry, ext, glob},
+        grammar::registry::entry,
+    };
 
     fn engine(entries: &[(&str, &[ExtensionEntry])]) -> GrammarEngine {
         entries
             .iter()
-            .map(|&(id, exts)| (id, language(id, exts)))
+            .map(|&(id, exts)| (id, entry(id, exts)))
             .collect()
     }
 

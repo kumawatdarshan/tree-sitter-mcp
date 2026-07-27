@@ -5,7 +5,7 @@ use rmcp::{
 use serde::Deserialize;
 
 use crate::grammar::ByteRange;
-use crate::mcp::tools::json_result;
+use crate::mcp::tools::{FileParams, json_result};
 
 #[tool_router(router = run_query_router, vis = "pub(crate)")]
 impl crate::TreeSitterServer {
@@ -26,8 +26,8 @@ impl crate::TreeSitterServer {
         Parameters(params): Parameters<RunQueryParams>,
     ) -> Result<CallToolResult, ErrorData> {
         let matches = self.grammar.run_query(
-            &params.path,
-            params.language.as_deref(),
+            &params.file.path,
+            params.file.language.as_deref(),
             &params.query,
             params.range.as_ref(),
         )?;
@@ -38,11 +38,8 @@ impl crate::TreeSitterServer {
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RunQueryParams {
-    #[schemars(description = "Absolute or workspace-relative path to the source file")]
-    pub path: String,
-
-    #[schemars(description = "Language id. Inferred from the file extension if omitted.")]
-    pub language: Option<String>,
+    #[serde(flatten)]
+    pub file: FileParams,
 
     #[schemars(
         description = r#"A tree-sitter S-expression query, e.g. "(function_item name: (identifier) @name)". Use the query_guide prompt for syntax help."#
