@@ -1,16 +1,11 @@
 use crate::config::ConfigError;
 use std::collections::HashMap;
 
-use globset::GlobBuilder;
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser::SerializeMap};
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[serde(untagged)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ExtensionEntry {
-    #[serde(deserialize_with = "deserialize_glob")]
-    Glob { glob: String },
-
-    #[serde(deserialize_with = "deserialize_ext")]
+    Glob { glob: globset::Glob },
     Ext(String),
 }
 
@@ -20,29 +15,26 @@ pub struct ExtensionMap(HashMap<String, Vec<ExtensionEntry>>);
 
 #[derive(Deserialize)]
 struct ExtensionMapWrapper {
-    extensions: HashMap<String, Vec<ExtensionEntry>>,
+    extensions: Option<HashMap<String, Vec<ExtensionEntry>>>,
 }
 
 impl TryFrom<ExtensionMapWrapper> for ExtensionMap {
     type Error = ConfigError;
 
     fn try_from(wire: ExtensionMapWrapper) -> Result<Self, Self::Error> {
-        for (lang_key, entries) in &wire.extensions {
+        let extensions = wire.extensions.ok_or(ConfigError::MissingExtensionsTable)?;
+        for (lang_key, entries) in &extensions {
             if entries.is_empty() {
                 return Err(ConfigError::EmptyExtensions(lang_key.clone()));
             }
         }
-        Ok(ExtensionMap(wire.extensions))
+        Ok(ExtensionMap(extensions))
     }
 }
 
 impl ExtensionMap {
     pub(crate) fn from_toml_str(s: &str) -> Result<Self, ConfigError> {
-        let wire: ExtensionMapWrapper = toml::from_str(s).map_err(|e| match e.message() {
-            m if m.contains("missing field `extensions`") => ConfigError::MissingExtensionsTable,
-            _ => e.into(),
-        })?;
-
+        let wire: ExtensionMapWrapper = toml::from_str(s)?;
         Self::try_from(wire)
     }
 
@@ -64,34 +56,44 @@ impl IntoIterator for ExtensionMap {
     }
 }
 
-fn deserialize_ext<'de, D>(deserializer: D) -> Result<String, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-
-    if s.contains(['/', '*', '?', '[']) || s.is_empty() {
-        return Err(serde::de::Error::custom("Invalid plain extension string"));
+impl Serialize for ExtensionEntry {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            ExtensionEntry::Glob { glob } => {
+                let mut map = serializer.serialize_map(Some(1))?;
+                map.serialize_entry("glob", glob.glob())?;
+                map.end()
+            }
+            ExtensionEntry::Ext(s) => s.serialize(serializer),
+        }
     }
-    Ok(s)
 }
 
-fn deserialize_glob<'de, D>(deserializer: D) -> Result<String, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    struct GlobHelper {
-        glob: String,
+impl<'de> Deserialize<'de> for ExtensionEntry {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Raw {
+            GlobObj { glob: String },
+            Plain(String),
+        }
+
+        match Raw::deserialize(deserializer)? {
+            Raw::GlobObj { glob } => {
+                let compiled = globset::GlobBuilder::new(&glob)
+                    .literal_separator(true)
+                    .build()
+                    .map_err(de::Error::custom)?;
+                Ok(ExtensionEntry::Glob { glob: compiled })
+            }
+            Raw::Plain(s) => {
+                if s.contains(['/', '*', '?', '[']) || s.is_empty() {
+                    return Err(de::Error::custom("Invalid plain extension string"));
+                }
+                Ok(ExtensionEntry::Ext(s))
+            }
+        }
     }
-
-    let helper = GlobHelper::deserialize(deserializer)?;
-
-    GlobBuilder::new(&helper.glob)
-        .build()
-        .map_err(|e| serde::de::Error::custom(e.to_string()))?;
-
-    Ok(helper.glob)
 }
 
 #[cfg(test)]
@@ -193,7 +195,9 @@ python = [{ glob = "*.py" }]
 
         assert_eq!(pairs[0].0, "python");
         assert_eq!(pairs[0].1.len(), 1);
-        assert!(matches!(pairs[0].1[0], ExtensionEntry::Glob { ref glob } if glob == "*.py"));
+        assert!(
+            matches!(pairs[0].1[0], ExtensionEntry::Glob { ref glob } if glob.glob() == "*.py")
+        );
 
         assert_eq!(pairs[1].0, "rust");
         assert_eq!(pairs[1].1.len(), 1);

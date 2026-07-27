@@ -37,17 +37,22 @@ pub enum ConfigError {
 }
 
 use crate::config::extension::ExtensionMap;
+use etcetera::AppStrategy;
 
-pub fn load() -> Result<ExtensionMap, ConfigError> {
-    use etcetera::AppStrategy;
-
-    let strategy = etcetera::choose_app_strategy(etcetera::AppStrategyArgs {
+fn strategy() -> Result<impl etcetera::AppStrategy, ConfigError> {
+    Ok(etcetera::choose_app_strategy(etcetera::AppStrategyArgs {
         app_name: "tree-sitter-mcp".to_string(),
         top_level_domain: "org".to_string(),
         author: "tree-sitter-mcp".to_string(),
-    })?;
+    })?)
+}
 
-    let config_path = strategy.config_dir().join("languages.toml");
+pub fn grammar_dir() -> Result<PathBuf, ConfigError> {
+    Ok(strategy()?.data_dir().join("grammars"))
+}
+
+pub fn load() -> Result<ExtensionMap, ConfigError> {
+    let config_path = strategy()?.config_dir().join("languages.toml");
     let content = std::fs::read_to_string(&config_path)
         .map_err(|e| ConfigError::ConfigRead(config_path, e))?;
 
