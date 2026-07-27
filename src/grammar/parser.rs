@@ -1,7 +1,7 @@
 use rmcp::schemars;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use tree_sitter::Parser;
+use tree_sitter::{Node, Parser};
 
 use crate::grammar::{LanguageEntry, error::GrammarError};
 
@@ -35,6 +35,25 @@ impl fmt::Display for NodeInfo {
 impl fmt::Display for ByteRange {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}..{}", self.start, self.end)
+    }
+}
+
+pub(crate) fn node_text(node: Node<'_>, source: &str) -> String {
+    node.utf8_text(source.as_bytes())
+        .unwrap_or("<invalid utf8>")
+        .to_string()
+}
+
+impl<'a> From<(Node<'a>, &'a str)> for NodeInfo {
+    fn from((node, source): (Node<'a>, &'a str)) -> Self {
+        Self {
+            kind: node.kind().to_string(),
+            start_byte: node.start_byte(),
+            end_byte: node.end_byte(),
+            start_point: (node.start_position().row, node.start_position().column),
+            end_point: (node.end_position().row, node.end_position().column),
+            text: node_text(node, source),
+        }
     }
 }
 

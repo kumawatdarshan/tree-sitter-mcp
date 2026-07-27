@@ -2,7 +2,7 @@ use rmcp::schemars;
 use serde::Serialize;
 use std::fmt;
 
-use crate::grammar::{error::GrammarError, node_info};
+use crate::grammar::error::GrammarError;
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct FindNodeResult {
@@ -41,7 +41,7 @@ impl super::GrammarEngine {
 
         let mut ancestors = Vec::new();
         loop {
-            ancestors.push(node_info(node, &source));
+            ancestors.push((node, source.as_str()).into());
             match node.parent() {
                 Some(parent) => node = parent,
                 None => break,

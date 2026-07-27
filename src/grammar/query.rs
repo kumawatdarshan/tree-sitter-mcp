@@ -3,16 +3,12 @@ use serde::Serialize;
 use std::fmt;
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
-use crate::grammar::{apply_range, error::GrammarError, node_text};
+use crate::grammar::{apply_range, error::GrammarError, parser::NodeInfo};
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct Capture {
     pub(crate) name: String,
-    pub(crate) start_byte: usize,
-    pub(crate) end_byte: usize,
-    pub(crate) start_point: (usize, usize),
-    pub(crate) end_point: (usize, usize),
-    pub(crate) text: String,
+    pub(crate) node: NodeInfo,
 }
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
@@ -23,11 +19,11 @@ pub struct QueryMatch {
 
 impl fmt::Display for Capture {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let truncated: String = self.text.chars().take(50).collect();
+        let truncated: String = self.node.text.chars().take(50).collect();
         write!(
             f,
             "{}@{}..{}: {}",
-            self.name, self.start_byte, self.end_byte, truncated
+            self.name, self.node.start_byte, self.node.end_byte, truncated
         )
     }
 }
@@ -71,11 +67,7 @@ impl super::GrammarEngine {
                 .iter()
                 .map(|c| Capture {
                     name: query.capture_names()[c.index as usize].to_string(),
-                    start_byte: c.node.start_byte(),
-                    end_byte: c.node.end_byte(),
-                    start_point: (c.node.start_position().row, c.node.start_position().column),
-                    end_point: (c.node.end_position().row, c.node.end_position().column),
-                    text: node_text(c.node, &source),
+                    node: NodeInfo::from((c.node, source.as_str())),
                 })
                 .collect();
             matches.push(QueryMatch {

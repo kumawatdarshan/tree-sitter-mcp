@@ -145,29 +145,12 @@ impl GrammarEngine {
     }
 }
 
-pub(crate) fn node_text(node: Node<'_>, source: &str) -> String {
-    node.utf8_text(source.as_bytes())
-        .unwrap_or("<invalid utf8>")
-        .to_string()
-}
-
 pub(crate) fn apply_range<'a>(root: Node<'a>, range: Option<&ByteRange>) -> Node<'a> {
     match range {
         Some(r) => root
             .descendant_for_byte_range(r.start, r.end)
             .unwrap_or(root),
         None => root,
-    }
-}
-
-pub(crate) fn node_info(node: Node<'_>, source: &str) -> NodeInfo {
-    NodeInfo {
-        kind: node.kind().to_string(),
-        start_byte: node.start_byte(),
-        end_byte: node.end_byte(),
-        start_point: (node.start_position().row, node.start_position().column),
-        end_point: (node.end_position().row, node.end_position().column),
-        text: node_text(node, source),
     }
 }
 
