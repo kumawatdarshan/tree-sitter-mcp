@@ -2,22 +2,22 @@ use rmcp::schemars;
 use serde::Serialize;
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
-use crate::grammar::error::GrammarError;
+use crate::grammar::{apply_range, error::GrammarError, node_text};
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct Capture {
-    pub name: String,
-    pub start_byte: usize,
-    pub end_byte: usize,
-    pub start_point: (usize, usize),
-    pub end_point: (usize, usize),
-    pub text: String,
+    pub(crate) name: String,
+    pub(crate) start_byte: usize,
+    pub(crate) end_byte: usize,
+    pub(crate) start_point: (usize, usize),
+    pub(crate) end_point: (usize, usize),
+    pub(crate) text: String,
 }
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct QueryMatch {
-    pub pattern_index: usize,
-    pub captures: Vec<Capture>,
+    pub(crate) pattern_index: usize,
+    pub(crate) captures: Vec<Capture>,
 }
 
 impl super::GrammarEngine {
@@ -28,9 +28,9 @@ impl super::GrammarEngine {
         query_str: &str,
         range: Option<&super::parser::ByteRange>,
     ) -> Result<Vec<QueryMatch>, GrammarError> {
-        let entry = self.registry.resolve(path, language)?;
-        let (source, tree) = self.load_tree(path, language)?;
-        let root = Self::apply_range(tree.root_node(), range);
+        let entry = self.resolve(path, language)?;
+        let (source, tree) = self.load_tree_for_entry(entry, path)?;
+        let root = apply_range(tree.root_node(), range);
 
         let lang = entry
             .language
@@ -53,11 +53,7 @@ impl super::GrammarEngine {
                     end_byte: c.node.end_byte(),
                     start_point: (c.node.start_position().row, c.node.start_position().column),
                     end_point: (c.node.end_position().row, c.node.end_position().column),
-                    text: c
-                        .node
-                        .utf8_text(source.as_bytes())
-                        .unwrap_or("<invalid utf8>")
-                        .to_string(),
+                    text: node_text(c.node, &source),
                 })
                 .collect();
             matches.push(QueryMatch {

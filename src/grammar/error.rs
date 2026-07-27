@@ -6,12 +6,6 @@ pub enum GrammarError {
     #[error(transparent)]
     Config(#[from] crate::config::ConfigError),
 
-    #[error("failed to choose config directory")]
-    ConfigDir(#[from] etcetera::HomeDirError),
-
-    #[error("failed to read config file {0}")]
-    ConfigRead(PathBuf, #[source] std::io::Error),
-
     #[error("failed to read source file {0}")]
     SourceRead(PathBuf, #[source] std::io::Error),
 
