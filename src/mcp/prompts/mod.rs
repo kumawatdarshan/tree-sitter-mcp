@@ -1,1 +1,1 @@
-pub mod query_guide;
+pub(crate) mod query_guide;

@@ -1,15 +1,15 @@
 use rmcp::{
     ErrorData,
     handler::server::wrapper::Parameters,
-    model::{CallToolResult, ContentBlock},
+    model::CallToolResult,
     schemars, tool, tool_router,
 };
 use serde::Deserialize;
 
 use crate::grammar::ByteRange;
-use crate::mcp::tools::grammar_error;
+use crate::mcp::tools::{grammar_error, text_result};
 
-#[tool_router(router = dump_ast_router, vis = "pub")]
+#[tool_router(router = dump_ast_router, vis = "pub(crate)")]
 impl crate::TreeSitterServer {
     #[tool(
         description = "Dump the tree-sitter S-expression AST for a source file. \
@@ -36,12 +36,12 @@ impl crate::TreeSitterServer {
             )
             .map_err(grammar_error)?;
 
-        Ok(CallToolResult::success(vec![ContentBlock::text(ast)]))
+        Ok(text_result(ast))
     }
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct DumpAstParams {
+pub(crate) struct DumpAstParams {
     #[schemars(description = "Absolute or workspace-relative path to the source file")]
     pub path: String,
 

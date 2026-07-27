@@ -1,8 +1,8 @@
-pub mod dump_ast;
-pub mod find_node;
-pub mod list_languages;
-pub mod ping;
-pub mod run_query;
+pub(crate) mod dump_ast;
+pub(crate) mod find_node;
+pub(crate) mod list_languages;
+pub(crate) mod ping;
+pub(crate) mod run_query;
 
 use std::sync::Arc;
 
@@ -10,9 +10,9 @@ use rmcp::{
     ErrorData, RoleServer, ServerHandler,
     handler::server::router::tool::ToolRouter,
     model::{
-        ErrorCode, Implementation, ListResourceTemplatesResult, ListResourcesResult,
-        PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult, Resource,
-        ResourceContents, ResourceTemplate, ServerCapabilities,
+        CallToolResult, ContentBlock, ErrorCode, Implementation, ListResourceTemplatesResult,
+        ListResourcesResult, PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult,
+        Resource, ResourceContents, ResourceTemplate, ServerCapabilities,
     },
     prompt_handler,
     service::RequestContext,
@@ -42,6 +42,24 @@ impl TreeSitterServer {
             + Self::find_node_router()
             + Self::list_languages_router()
     }
+}
+
+pub(crate) fn text_result(text: impl Into<String>) -> CallToolResult {
+    CallToolResult::success(vec![ContentBlock::text(text)])
+}
+
+pub(crate) fn json_result<T: serde::Serialize>(
+    value: &T,
+    context: &str,
+) -> Result<CallToolResult, ErrorData> {
+    let json = serde_json::to_string_pretty(value).map_err(|e| {
+        ErrorData::new(
+            ErrorCode::INTERNAL_ERROR,
+            format!("failed to serialize {context}: {e}"),
+            None,
+        )
+    })?;
+    Ok(CallToolResult::success(vec![ContentBlock::text(json)]))
 }
 
 pub(crate) fn grammar_error(error: GrammarError) -> ErrorData {
@@ -98,13 +116,7 @@ impl ServerHandler for TreeSitterServer {
         let uri = request.uri.as_str();
         match uri {
             "tree-sitter://languages" => {
-                let summaries = self.grammar.language_summaries();
-                let text = summaries
-                    .iter()
-                    .filter(|s| s.loaded)
-                    .map(|s| s.id.as_str())
-                    .collect::<Vec<_>>()
-                    .join("\n");
+                let text = self.grammar.loaded_language_ids().join("\n");
                 Ok(ReadResourceResult::new(vec![
                     ResourceContents::TextResourceContents {
                         uri: "tree-sitter://languages".into(),

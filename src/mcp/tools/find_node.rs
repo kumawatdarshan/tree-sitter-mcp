@@ -1,14 +1,14 @@
 use rmcp::{
     ErrorData,
     handler::server::wrapper::Parameters,
-    model::{CallToolResult, ContentBlock, ErrorCode},
+    model::CallToolResult,
     schemars, tool, tool_router,
 };
 use serde::Deserialize;
 
-use crate::mcp::tools::grammar_error;
+use crate::mcp::tools::{grammar_error, json_result};
 
-#[tool_router(router = find_node_router, vis = "pub")]
+#[tool_router(router = find_node_router, vis = "pub(crate)")]
 impl crate::TreeSitterServer {
     #[tool(
         description = "Find the smallest named node at a byte offset in a source file, \
@@ -31,20 +31,12 @@ impl crate::TreeSitterServer {
             .find_node(&params.path, params.language.as_deref(), params.byte)
             .map_err(grammar_error)?;
 
-        let json = serde_json::to_string_pretty(&result).map_err(|e| {
-            ErrorData::new(
-                ErrorCode::INTERNAL_ERROR,
-                format!("failed to serialize node info: {e}"),
-                None,
-            )
-        })?;
-
-        Ok(CallToolResult::success(vec![ContentBlock::text(json)]))
+        json_result(&result, "node info")
     }
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct FindNodeParams {
+pub(crate) struct FindNodeParams {
     #[schemars(description = "Absolute or workspace-relative path to the source file")]
     pub path: String,
 

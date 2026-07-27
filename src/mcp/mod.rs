@@ -1,2 +1,2 @@
-pub mod prompts;
-pub mod tools;
+pub(crate) mod prompts;
+pub(crate) mod tools;

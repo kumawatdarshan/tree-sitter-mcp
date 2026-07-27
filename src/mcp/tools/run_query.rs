@@ -1,15 +1,15 @@
 use rmcp::{
     ErrorData,
     handler::server::wrapper::Parameters,
-    model::{CallToolResult, ContentBlock, ErrorCode},
+    model::CallToolResult,
     schemars, tool, tool_router,
 };
 use serde::Deserialize;
 
 use crate::grammar::ByteRange;
-use crate::mcp::tools::grammar_error;
+use crate::mcp::tools::{grammar_error, json_result};
 
-#[tool_router(router = run_query_router, vis = "pub")]
+#[tool_router(router = run_query_router, vis = "pub(crate)")]
 impl crate::TreeSitterServer {
     #[tool(
         description = "Run a tree-sitter S-expression query against a source file and return \
@@ -37,20 +37,12 @@ impl crate::TreeSitterServer {
             )
             .map_err(grammar_error)?;
 
-        let json = serde_json::to_string_pretty(&matches).map_err(|e| {
-            ErrorData::new(
-                ErrorCode::INTERNAL_ERROR,
-                format!("failed to serialize query matches: {e}"),
-                None,
-            )
-        })?;
-
-        Ok(CallToolResult::success(vec![ContentBlock::text(json)]))
+        json_result(&matches, "query matches")
     }
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct RunQueryParams {
+pub(crate) struct RunQueryParams {
     #[schemars(description = "Absolute or workspace-relative path to the source file")]
     pub path: String,
 

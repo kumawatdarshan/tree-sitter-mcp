@@ -1,8 +1,10 @@
 use rmcp::{
     ErrorData,
-    model::{CallToolResult, ContentBlock},
+    model::CallToolResult,
     tool, tool_router,
 };
+
+use crate::mcp::tools::text_result;
 
 #[tool_router(router = list_languages_router, vis = "pub")]
 impl crate::TreeSitterServer {
@@ -17,21 +19,14 @@ impl crate::TreeSitterServer {
             open_world_hint = false
         )
     )]
-    async fn tree_sitter_list_languages(&self) -> Result<CallToolResult, ErrorData> {
-        let summaries = self.grammar.language_summaries();
-        let lines: Vec<String> = summaries
+    async fn tree_sitter_list_languages(&self    ) -> Result<CallToolResult, ErrorData> {
+        let lines: Vec<String> = self
+            .grammar
+            .language_summaries()
             .iter()
-            .map(|s| {
-                if s.loaded {
-                    format!("{}: {}", s.id, s.extensions.join(", "))
-                } else {
-                    format!("{}: {} (grammar not loaded)", s.id, s.extensions.join(", "))
-                }
-            })
+            .map(|s| s.display_line())
             .collect();
 
-        Ok(CallToolResult::success(vec![ContentBlock::text(
-            lines.join("\n"),
-        )]))
+        Ok(text_result(lines.join("\n")))
     }
 }
