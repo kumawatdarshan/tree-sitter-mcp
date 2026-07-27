@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tree_sitter::Node;
 
+#[derive(Debug)]
 pub struct GrammarEngine {
     entries: HashMap<String, LanguageEntry>,
 }
@@ -80,10 +81,10 @@ impl GrammarEngine {
 
         let path_buf = Path::new(path);
 
-        if let Some(ext) = path_buf.extension().and_then(|e| e.to_str()) {
-            if let Some(entry) = self.entries.values().find(|e| e.matches_extension(ext)) {
-                return Ok(entry);
-            }
+        if let Some(ext) = path_buf.extension().and_then(|e| e.to_str())
+            && let Some(entry) = self.entries.values().find(|e| e.matches_extension(ext))
+        {
+            return Ok(entry);
         }
 
         for entry in self.entries.values() {
@@ -96,28 +97,42 @@ impl GrammarEngine {
     }
 
     pub fn loaded_language_ids(&self) -> Vec<&str> {
-        let ids = self
-            .entries
+        self.entries
             .iter()
             .filter(|(_, e)| e.is_loaded())
             .map(|(x, _)| x.as_str())
-            .collect();
-        ids
+            .collect()
     }
 
     pub fn language_summaries(&self) -> Vec<LanguageSummary> {
-        let list = self
-            .entries
-            .iter()
-            .map(|(id, entry)| LanguageSummary {
-                id: id.clone(),
-                loaded: entry.is_loaded(),
-                extensions: entry.extensions_display(),
-            })
-            .collect();
-        list
+        self.entries.values().map(LanguageSummary::from).collect()
     }
 
+    pub fn loaded_languages(&self) -> LoadedLanguages<'_> {
+        LoadedLanguages {
+            iter: self.entries.iter(),
+        }
+    }
+}
+
+pub struct LoadedLanguages<'a> {
+    iter: std::collections::hash_map::Iter<'a, String, LanguageEntry>,
+}
+
+impl<'a> Iterator for LoadedLanguages<'a> {
+    type Item = &'a str;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter
+            .find_map(|(id, entry)| entry.is_loaded().then_some(id.as_str()))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, self.iter.size_hint().1)
+    }
+}
+
+impl GrammarEngine {
     pub fn dump_ast(
         &self,
         path: &str,

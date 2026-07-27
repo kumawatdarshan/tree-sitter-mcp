@@ -20,7 +20,7 @@ impl crate::TreeSitterServer {
             .grammar
             .language_summaries()
             .iter()
-            .map(|s| s.display_line())
+            .map(|s| s.to_string())
             .collect();
 
         Ok(text_result(lines.join("\n")))

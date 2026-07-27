@@ -1,5 +1,6 @@
 use rmcp::schemars;
 use serde::Serialize;
+use std::fmt;
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
 use crate::grammar::{apply_range, error::GrammarError, node_text};
@@ -18,6 +19,27 @@ pub struct Capture {
 pub struct QueryMatch {
     pub(crate) pattern_index: usize,
     pub(crate) captures: Vec<Capture>,
+}
+
+impl fmt::Display for Capture {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let truncated: String = self.text.chars().take(50).collect();
+        write!(
+            f,
+            "{}@{}..{}: {}",
+            self.name, self.start_byte, self.end_byte, truncated
+        )
+    }
+}
+
+impl fmt::Display for QueryMatch {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Pattern {}:", self.pattern_index)?;
+        for capture in &self.captures {
+            writeln!(f, "  {capture}")?;
+        }
+        Ok(())
+    }
 }
 
 impl super::GrammarEngine {

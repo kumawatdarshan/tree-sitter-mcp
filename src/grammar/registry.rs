@@ -1,9 +1,10 @@
+use std::fmt;
 use std::path::Path;
 
 use crate::config::extension::ExtensionEntry;
 use crate::grammar::error::GrammarError;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct LanguageEntry {
     pub(crate) id: String,
     pub(crate) language: Option<tree_sitter::Language>,
@@ -47,18 +48,16 @@ impl LanguageEntry {
         }
         Ok(false)
     }
+}
 
-    pub(super) fn extensions_display(&self) -> Vec<String> {
-        self.extensions
-            .iter()
-            .map(|e| match e {
-                ExtensionEntry::Ext(s) => format!(".{s}"),
-                ExtensionEntry::Glob { glob } => format!("{{ {} }}", glob.glob()),
-            })
-            .collect()
+impl fmt::Display for LanguageEntry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let exts: Vec<String> = self.extensions.iter().map(|e| e.to_string()).collect();
+        write!(f, "{}: {}", self.id, exts.join(", "))
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LanguageSummary {
     pub(crate) id: String,
     pub(crate) loaded: bool,
@@ -77,16 +76,25 @@ impl LanguageSummary {
             extensions: exts.into_iter().map(Into::into).collect(),
         }
     }
+}
 
-    pub fn display_line(&self) -> String {
+impl fmt::Display for LanguageSummary {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let exts = self.extensions.join(", ");
         if self.loaded {
-            format!("{}: {}", self.id, self.extensions.join(", "))
+            write!(f, "{}: {exts}", self.id)
         } else {
-            format!(
-                "{}: {} (grammar not loaded)",
-                self.id,
-                self.extensions.join(", ")
-            )
+            write!(f, "{}: {exts} (grammar not loaded)", self.id)
+        }
+    }
+}
+
+impl From<&LanguageEntry> for LanguageSummary {
+    fn from(entry: &LanguageEntry) -> Self {
+        Self {
+            id: entry.id.clone(),
+            loaded: entry.is_loaded(),
+            extensions: entry.extensions.iter().map(|e| e.to_string()).collect(),
         }
     }
 }
@@ -193,31 +201,30 @@ mod tests {
     }
 
     #[test]
-    fn extensions_display_formats_ext_and_glob() {
+    fn display_formats_ext_and_glob() {
         let lang = entry("toml", &[ext("toml"), glob("Cargo.lock"), glob("pdm.lock")]);
-        assert_eq!(
-            lang.extensions_display(),
-            &[".toml", "{ Cargo.lock }", "{ pdm.lock }"]
-        );
+        let formatted: Vec<String> = lang.extensions.iter().map(|e| e.to_string()).collect();
+        assert_eq!(formatted, &[".toml", "{ Cargo.lock }", "{ pdm.lock }"]);
     }
 
     #[test]
-    fn extensions_display_formats_globs_only() {
+    fn display_formats_globs_only() {
         let lang = entry("gomod", &[glob("go.mod")]);
-        assert_eq!(lang.extensions_display(), &["{ go.mod }"]);
+        let formatted: Vec<String> = lang.extensions.iter().map(|e| e.to_string()).collect();
+        assert_eq!(formatted, &["{ go.mod }"]);
     }
 
     #[test]
     fn display_line_shows_loaded_language() {
         let summary = LanguageSummary::new("rust", true, [".rs", ".rsx"]);
-        assert_eq!(summary.display_line(), "rust: .rs, .rsx");
+        assert_eq!(summary.to_string(), "rust: .rs, .rsx");
     }
 
     #[test]
     fn display_line_shows_unloaded_language() {
         let summary = LanguageSummary::new("brainfuck", false, [".b", ".bf"]);
         assert_eq!(
-            summary.display_line(),
+            summary.to_string(),
             "brainfuck: .b, .bf (grammar not loaded)"
         );
     }

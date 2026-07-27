@@ -21,7 +21,7 @@ use rmcp::{
 
 use crate::grammar::GrammarEngine;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TreeSitterServer {
     pub(crate) grammar: Arc<GrammarEngine>,
     tool_router: ToolRouter<Self>,

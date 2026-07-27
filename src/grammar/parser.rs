@@ -1,10 +1,11 @@
 use rmcp::schemars;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use tree_sitter::Parser;
 
 use crate::grammar::{LanguageEntry, error::GrammarError};
 
-#[derive(Debug, Clone, Copy, Deserialize, schemars::JsonSchema)]
+#[derive(Debug, Clone, Copy, Deserialize, schemars::JsonSchema, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ByteRange {
     pub(crate) start: usize,
     pub(crate) end: usize,
@@ -18,6 +19,23 @@ pub struct NodeInfo {
     pub(crate) start_point: (usize, usize),
     pub(crate) end_point: (usize, usize),
     pub(crate) text: String,
+}
+
+impl fmt::Display for NodeInfo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let truncated: String = self.text.chars().take(50).collect();
+        write!(
+            f,
+            "{}@{}..{}: {}",
+            self.kind, self.start_byte, self.end_byte, truncated
+        )
+    }
+}
+
+impl fmt::Display for ByteRange {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}..{}", self.start, self.end)
+    }
 }
 
 impl super::GrammarEngine {

@@ -1,5 +1,6 @@
 use crate::config::ConfigError;
 use std::collections::HashMap;
+use std::fmt;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser::SerializeMap};
 
@@ -92,6 +93,15 @@ impl<'de> Deserialize<'de> for ExtensionEntry {
                 }
                 Ok(ExtensionEntry::Ext(s))
             }
+        }
+    }
+}
+
+impl fmt::Display for ExtensionEntry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ExtensionEntry::Ext(s) => write!(f, ".{s}"),
+            ExtensionEntry::Glob { glob } => write!(f, "{{ {} }}", glob.glob()),
         }
     }
 }
