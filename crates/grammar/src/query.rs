@@ -1,9 +1,9 @@
-use rmcp::schemars;
+use schemars;
 use serde::Serialize;
 use std::{fmt, ops::RangeBounds};
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
-use crate::grammar::{
+use crate::{
     apply_range,
     error::GrammarError,
     parser::{NodeInfo, truncated_text},

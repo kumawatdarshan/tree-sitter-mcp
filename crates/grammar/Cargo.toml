@@ -1,0 +1,13 @@
+[package]
+name = "grammar"
+version = "0.0.1"
+edition = "2024"
+
+[dependencies]
+tree-sitter = "0.26.11"
+tree-sitter-loader = "0.26.11"
+schemars = "1.2.2"
+config.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tracing.workspace = true

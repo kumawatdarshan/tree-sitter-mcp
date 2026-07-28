@@ -1,0 +1,11 @@
+[package]
+name = "mcp"
+version = "0.0.1"
+edition = "2024"
+
+[dependencies]
+serde_json.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+rmcp.workspace = true
+grammar.workspace = true

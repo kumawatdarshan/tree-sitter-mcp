@@ -1,5 +1,4 @@
-use crate::grammar::error::GrammarError;
-use rmcp::schemars;
+use crate::error::GrammarError;
 use serde::Serialize;
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]

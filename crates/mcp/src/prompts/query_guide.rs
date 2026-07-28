@@ -11,7 +11,11 @@ impl crate::TreeSitterServer {
         description = "Guide for writing tree-sitter S-expression queries across the languages this server supports"
     )]
     async fn query_guide(&self) -> Result<GetPromptResult, ErrorData> {
-        let ids = self.grammar.loaded_language_ids().collect::<Vec<_>>();
+        let ids = self
+            .grammar
+            .loaded_language_ids()
+            .collect::<Vec<_>>()
+            .join(", ");
         let text = format!(
             r#"Tree-sitter S-expression query syntax:
 
@@ -24,7 +28,7 @@ impl crate::TreeSitterServer {
              - Predicates filter matches by captured text:
                `(#eq? @capture "literal")`, `(#match? @capture "regex")`.
 
-             Supported languages on this server: {ids:?}.
+             Supported languages on this server: {ids}.
              Use tree_sitter_dump_ast first to see the node kinds and field names
              for the file you're targeting, then write a query against tree_sitter_run_query."#,
         );

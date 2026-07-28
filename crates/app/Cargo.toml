@@ -1,0 +1,13 @@
+[package]
+name = "app"
+version = "0.0.1"
+edition = "2024"
+
+[dependencies]
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+grammar.workspace = true
+mcp.workspace = true
+rmcp.workspace = true
+anyhow.workspace = true

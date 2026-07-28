@@ -1,7 +1,9 @@
-use crate::mcp::tools::{FileParams, text_result};
+use crate::{
+    McpError,
+    tools::{FileParams, text_result},
+};
 use rmcp::{
-    ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
-    tool_router,
+    handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool, tool_router,
 };
 use serde::Deserialize;
 
@@ -22,7 +24,7 @@ impl crate::TreeSitterServer {
     async fn tree_sitter_dump_ast(
         &self,
         Parameters(params): Parameters<DumpAstParams>,
-    ) -> Result<CallToolResult, ErrorData> {
+    ) -> Result<CallToolResult, McpError> {
         let ast = self.grammar.dump_ast(
             &params.file.path,
             params.file.language.as_deref(),

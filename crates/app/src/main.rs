@@ -1,11 +1,10 @@
-pub mod config;
-pub mod grammar;
-pub mod mcp;
 pub mod telemetry;
 
 use std::sync::Arc;
 
-use crate::{grammar::GrammarEngine, mcp::tools::TreeSitterServer, telemetry::init_tracing};
+use crate::telemetry::init_tracing;
+use grammar::GrammarEngine;
+use mcp::TreeSitterServer;
 use rmcp::ServiceExt;
 use tokio::io::{stdin, stdout};
 

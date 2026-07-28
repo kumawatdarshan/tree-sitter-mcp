@@ -1,6 +1,6 @@
-use rmcp::{tool, tool_router};
+use rmcp::{model::CallToolResult, tool, tool_router};
 
-use crate::TreeSitterServer;
+use crate::{McpError, TreeSitterServer, tools::text_result};
 
 #[tool_router(router = ping_router, vis = "pub(crate)")]
 impl TreeSitterServer {
@@ -14,7 +14,7 @@ impl TreeSitterServer {
             open_world_hint = false
         )
     )]
-    async fn ping(&self) -> String {
-        "pong".into()
+    async fn ping(&self) -> Result<CallToolResult, McpError> {
+        Ok(text_result("pong"))
     }
 }

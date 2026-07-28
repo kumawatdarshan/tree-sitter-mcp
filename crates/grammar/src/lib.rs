@@ -19,7 +19,7 @@ use tree_sitter::Node;
 
 #[derive(Debug)]
 pub struct GrammarEngine {
-    pub(crate) entries: HashMap<String, LanguageEntry>,
+    entries: HashMap<String, LanguageEntry>,
 }
 
 impl<K, V> FromIterator<(K, V)> for GrammarEngine
@@ -39,8 +39,8 @@ where
 
 impl GrammarEngine {
     pub fn load_default() -> Result<Self, GrammarError> {
-        let ext_map = crate::config::load()?;
-        let grammar_dir = crate::config::grammar_dir()?;
+        let ext_map = config::load()?;
+        let grammar_dir = config::grammar_dir()?;
 
         let mut entries = HashMap::new();
 
@@ -100,8 +100,9 @@ impl GrammarEngine {
             .filter(|(_, e)| e.is_loaded())
             .map(|(x, _)| x.as_str())
     }
-    pub fn language_summaries(&self) -> Vec<LanguageSummary> {
-        self.entries.values().map(LanguageSummary::from).collect()
+
+    pub fn language_summaries(&self) -> impl Iterator<Item = LanguageSummary> {
+        self.entries.values().map(LanguageSummary::from)
     }
 }
 
@@ -148,10 +149,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        config::extension::{ExtensionEntry, ext, glob},
-        grammar::registry::entry,
-    };
+    use crate::registry::entry;
+    use config::extension::{ExtensionEntry, ext, glob};
 
     fn engine(entries: &[(&str, &[ExtensionEntry])]) -> GrammarEngine {
         entries

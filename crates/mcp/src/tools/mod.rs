@@ -4,23 +4,19 @@ pub(crate) mod list_languages;
 pub(crate) mod ping;
 pub(crate) mod run_query;
 
-use std::sync::Arc;
-
+use crate::{McpError, TreeSitterServer};
 use rmcp::{
     ErrorData, RoleServer, ServerHandler,
-    handler::server::router::tool::ToolRouter,
     model::{
-        CallToolResult, ContentBlock, ErrorCode, Implementation, ListResourceTemplatesResult,
-        ListResourcesResult, PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult,
-        Resource, ResourceContents, ResourceTemplate, ServerCapabilities,
+        CallToolResult, ContentBlock, ErrorCode, Implementation, ListResourcesResult,
+        PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult, Resource,
+        ResourceContents, ServerCapabilities,
     },
     prompt_handler, schemars,
     service::RequestContext,
     tool_handler,
 };
 use serde::Deserialize;
-
-use crate::grammar::GrammarEngine;
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct FileParams {
@@ -31,29 +27,6 @@ pub(crate) struct FileParams {
     pub language: Option<String>,
 }
 
-#[derive(Clone, Debug)]
-pub struct TreeSitterServer {
-    pub(crate) grammar: Arc<GrammarEngine>,
-    tool_router: ToolRouter<Self>,
-}
-
-impl TreeSitterServer {
-    pub fn new(grammar: Arc<GrammarEngine>) -> Self {
-        Self {
-            grammar,
-            tool_router: Self::tool_router(),
-        }
-    }
-
-    fn tool_router() -> ToolRouter<Self> {
-        Self::ping_router()
-            + Self::dump_ast_router()
-            + Self::run_query_router()
-            + Self::find_node_router()
-            + Self::list_languages_router()
-    }
-}
-
 pub(crate) fn text_result(text: impl Into<String>) -> CallToolResult {
     CallToolResult::success(vec![ContentBlock::text(text)])
 }
@@ -61,7 +34,7 @@ pub(crate) fn text_result(text: impl Into<String>) -> CallToolResult {
 pub(crate) fn json_result<T: serde::Serialize>(
     value: &T,
     context: &str,
-) -> Result<CallToolResult, ErrorData> {
+) -> Result<CallToolResult, McpError> {
     let json = serde_json::to_string_pretty(value).map_err(|e| {
         ErrorData::new(
             ErrorCode::INTERNAL_ERROR,
@@ -133,17 +106,5 @@ impl ServerHandler for TreeSitterServer {
                 None,
             )),
         }
-    }
-
-    async fn list_resource_templates(
-        &self,
-        _request: Option<PaginatedRequestParams>,
-        _context: RequestContext<RoleServer>,
-    ) -> Result<ListResourceTemplatesResult, ErrorData> {
-        Ok(ListResourceTemplatesResult::with_all_items(vec![
-            ResourceTemplate::new("file://{path}", "File Source")
-                .with_description("Source code content of any file accessible to the server")
-                .with_mime_type("text/plain"),
-        ]))
     }
 }

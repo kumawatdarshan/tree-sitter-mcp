@@ -16,11 +16,6 @@
     };
 
     crane.url = "github:ipetkov/crane";
-
-    # git-hooks = {
-    #   url = "github:cachix/git-hooks.nix";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
   };
 
   outputs = {
@@ -30,7 +25,6 @@
     flake-utils,
     crane,
     treefmt-nix,
-    # git-hooks,
     ...
   }:
     flake-utils.lib.eachDefaultSystem (system: let
@@ -61,6 +55,7 @@
           treefmt-nix.lib.evalModule pkgs
           {
             projectRootFile = "flake.nix";
+            settings.excludes = ["tests/fixtures/*"];
             programs = {
               alejandra.enable = true;
               taplo.enable = true;
@@ -70,20 +65,6 @@
           }
         )
         .config.build.wrapper;
-      # some network issue. idk, will figure out later
-      # preCommitCheck = git-hooks.lib.${system}.run {
-      #   src = self;
-      #   package = pkgs.prek;
-      #   hooks = {
-      #     treefmt = {
-      #       enable = true;
-      #       package = formatter;
-      #     };
-      #     clippy.enable = true;
-      #     clippy.settings.allFeatures = true;
-      #     cargo-check.enable = true;
-      #   };
-      # };
     in {
       inherit formatter;
 
@@ -115,11 +96,9 @@
           packages = with pkgs; [
             just
             cargo-nextest
-            # preCommitCheck
+            cargo-expand
             formatter
           ];
-
-          # shellHook = preCommitCheck.shellHook;
         };
       };
     });

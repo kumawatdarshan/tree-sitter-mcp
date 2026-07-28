@@ -1,17 +1,13 @@
-use rmcp::{ErrorData, model::ErrorCode};
 use std::path::PathBuf;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum GrammarError {
     #[error(transparent)]
-    Config(#[from] crate::config::ConfigError),
+    Config(#[from] config::ConfigError),
 
     #[error("failed to read source file {0}")]
     SourceRead(PathBuf, #[source] std::io::Error),
-
-    #[error("invalid glob pattern")]
-    InvalidGlob(#[from] globset::Error),
 
     #[error("unknown language {0}")]
     UnknownLanguage(String),
@@ -43,18 +39,4 @@ pub enum GrammarError {
 
     #[error("byte offset {byte} is past end of file ({len} bytes)")]
     ByteOutOfBounds { byte: usize, len: usize },
-}
-
-impl From<GrammarError> for ErrorData {
-    fn from(error: GrammarError) -> Self {
-        let code = match &error {
-            GrammarError::UnknownLanguage(..)
-            | GrammarError::LanguageInference(..)
-            | GrammarError::SourceRead(..)
-            | GrammarError::Query(..)
-            | GrammarError::ByteOutOfBounds { .. } => ErrorCode::INVALID_PARAMS,
-            _ => ErrorCode::INTERNAL_ERROR,
-        };
-        ErrorData::new(code, error.to_string(), None)
-    }
 }

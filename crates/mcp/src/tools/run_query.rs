@@ -1,12 +1,14 @@
 use std::ops::Range;
 
 use rmcp::{
-    ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
-    tool_router,
+    handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool, tool_router,
 };
 use serde::Deserialize;
 
-use crate::mcp::tools::{FileParams, json_result};
+use crate::{
+    McpError,
+    tools::{FileParams, json_result},
+};
 
 #[tool_router(router = run_query_router, vis = "pub(crate)")]
 impl crate::TreeSitterServer {
@@ -25,7 +27,7 @@ impl crate::TreeSitterServer {
     async fn tree_sitter_run_query(
         &self,
         Parameters(params): Parameters<RunQueryParams>,
-    ) -> Result<CallToolResult, ErrorData> {
+    ) -> Result<CallToolResult, McpError> {
         let matches = self.grammar.run_query(
             &params.file.path,
             params.file.language.as_deref(),

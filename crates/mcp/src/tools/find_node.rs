@@ -1,10 +1,12 @@
 use rmcp::{
-    ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
-    tool_router,
+    handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool, tool_router,
 };
 use serde::Deserialize;
 
-use crate::mcp::tools::{FileParams, json_result};
+use crate::{
+    McpError,
+    tools::{FileParams, json_result},
+};
 
 #[tool_router(router = find_node_router, vis = "pub(crate)")]
 impl crate::TreeSitterServer {
@@ -23,7 +25,7 @@ impl crate::TreeSitterServer {
     async fn tree_sitter_find_node(
         &self,
         Parameters(params): Parameters<FindNodeParams>,
-    ) -> Result<CallToolResult, ErrorData> {
+    ) -> Result<CallToolResult, McpError> {
         let result = self.grammar.find_node(
             &params.file.path,
             params.file.language.as_deref(),

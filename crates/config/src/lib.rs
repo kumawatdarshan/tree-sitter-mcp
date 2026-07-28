@@ -1,4 +1,4 @@
-pub(crate) mod extension;
+pub mod extension;
 
 use std::path::PathBuf;
 
@@ -27,7 +27,7 @@ pub enum ConfigError {
     },
 }
 
-use crate::config::extension::ExtensionMap;
+use crate::extension::ExtensionMap;
 use etcetera::AppStrategy;
 
 fn strategy() -> Result<impl etcetera::AppStrategy, ConfigError> {

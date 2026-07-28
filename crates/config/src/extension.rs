@@ -1,8 +1,7 @@
-use crate::config::ConfigError;
+use super::ConfigError;
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser::SerializeMap};
 use std::collections::HashMap;
 use std::fmt;
-
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser::SerializeMap};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ExtensionEntry {
@@ -106,13 +105,11 @@ impl fmt::Display for ExtensionEntry {
     }
 }
 
-#[cfg(test)]
-pub(crate) fn ext(s: &str) -> ExtensionEntry {
+pub fn ext(s: &str) -> ExtensionEntry {
     ExtensionEntry::Ext(s.to_string())
 }
 
-#[cfg(test)]
-pub(crate) fn glob(pattern: &str) -> ExtensionEntry {
+pub fn glob(pattern: &str) -> ExtensionEntry {
     use globset::GlobBuilder;
     ExtensionEntry::Glob {
         glob: GlobBuilder::new(pattern)

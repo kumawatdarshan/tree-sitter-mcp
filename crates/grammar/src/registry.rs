@@ -1,11 +1,11 @@
 use std::fmt;
 use std::path::Path;
 
-use crate::config::extension::ExtensionEntry;
-use crate::grammar::error::GrammarError;
+use crate::error::GrammarError;
+use config::extension::ExtensionEntry;
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct LanguageEntry {
+pub struct LanguageEntry {
     pub(crate) id: String,
     pub(crate) language: Option<tree_sitter::Language>,
     pub(crate) extensions: Vec<ExtensionEntry>,
@@ -112,7 +112,7 @@ pub(crate) fn entry(id: &str, extensions: &[ExtensionEntry]) -> LanguageEntry {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::extension::{ext, glob};
+    use config::extension::{ext, glob};
 
     use super::*;
     use std::path::Path;

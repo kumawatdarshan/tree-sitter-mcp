@@ -1,8 +1,8 @@
-use rmcp::schemars;
+use schemars;
 use serde::Serialize;
 use tree_sitter::{Node, Parser};
 
-use crate::grammar::{LanguageEntry, error::GrammarError};
+use crate::{LanguageEntry, error::GrammarError};
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 #[serde(remote = "tree_sitter::Point")]
