@@ -1,6 +1,6 @@
 [package]
 name = "tree-sitter-mcp"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
 
 [dependencies]
@@ -21,4 +21,3 @@ tokio = { version = "1.53.1", features = ["full"] }
 [dev-dependencies]
 tempfile = "3"
 tree-sitter-rust = "0.23"
-

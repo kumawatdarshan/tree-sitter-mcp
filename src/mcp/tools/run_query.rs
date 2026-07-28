@@ -1,10 +1,11 @@
+use std::ops::Range;
+
 use rmcp::{
     ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
     tool_router,
 };
 use serde::Deserialize;
 
-use crate::grammar::ByteRange;
 use crate::mcp::tools::{FileParams, json_result};
 
 #[tool_router(router = run_query_router, vis = "pub(crate)")]
@@ -29,7 +30,7 @@ impl crate::TreeSitterServer {
             &params.file.path,
             params.file.language.as_deref(),
             &params.query,
-            params.range.as_ref(),
+            params.range,
         )?;
 
         json_result(&matches, "query matches")
@@ -47,5 +48,5 @@ pub(crate) struct RunQueryParams {
     pub query: String,
 
     #[schemars(description = "Restrict the search to this byte range instead of the whole file")]
-    pub range: Option<ByteRange>,
+    pub range: Option<Range<usize>>,
 }

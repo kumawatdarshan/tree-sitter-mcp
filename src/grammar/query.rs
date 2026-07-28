@@ -1,9 +1,13 @@
 use rmcp::schemars;
 use serde::Serialize;
-use std::fmt;
+use std::{fmt, ops::RangeBounds};
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
-use crate::grammar::{apply_range, error::GrammarError, parser::{NodeInfo, truncated_text}};
+use crate::grammar::{
+    apply_range,
+    error::GrammarError,
+    parser::{NodeInfo, truncated_text},
+};
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct Capture {
@@ -23,8 +27,8 @@ impl fmt::Display for Capture {
             f,
             "{}@{}..{}: {}",
             self.name,
-            self.node.start_byte,
-            self.node.end_byte,
+            self.node.range.start_byte,
+            self.node.range.end_byte,
             truncated_text(&self.node.text)
         )
     }
@@ -41,13 +45,16 @@ impl fmt::Display for QueryMatch {
 }
 
 impl super::GrammarEngine {
-    pub fn run_query(
+    pub fn run_query<R>(
         &self,
         path: &str,
         language: Option<&str>,
         query_str: &str,
-        range: Option<&super::parser::ByteRange>,
-    ) -> Result<Vec<QueryMatch>, GrammarError> {
+        range: Option<R>,
+    ) -> Result<Vec<QueryMatch>, GrammarError>
+    where
+        R: RangeBounds<usize>,
+    {
         let entry = self.resolve(path, language)?;
         let (source, tree) = self.load_tree_for_entry(entry, path)?;
         let root = apply_range(tree.root_node(), range);

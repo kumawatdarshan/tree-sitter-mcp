@@ -7,7 +7,7 @@ pub(crate) mod registry;
 
 pub use error::GrammarError;
 pub use find_node::FindNodeResult;
-pub use parser::{ByteRange, NodeInfo};
+pub use parser::NodeInfo;
 pub use query::{Capture, QueryMatch};
 pub use registry::LanguageSummary;
 
@@ -19,7 +19,7 @@ use tree_sitter::Node;
 
 #[derive(Debug)]
 pub struct GrammarEngine {
-    entries: HashMap<String, LanguageEntry>,
+    pub(crate) entries: HashMap<String, LanguageEntry>,
 }
 
 impl<K, V> FromIterator<(K, V)> for GrammarEngine
@@ -58,10 +58,8 @@ impl GrammarEngine {
                 None
             };
 
-            entries.insert(
-                lang.clone(),
-                LanguageEntry::new(&lang, language, extensions),
-            );
+            let entry = LanguageEntry::new(&lang, language, extensions);
+            entries.insert(lang, entry);
         }
 
         Ok(Self { entries })
@@ -88,7 +86,7 @@ impl GrammarEngine {
         }
 
         for entry in self.entries.values() {
-            if entry.matches_path(path_buf)? {
+            if entry.matches_path(path_buf) {
                 return Ok(entry);
             }
         }
@@ -96,60 +94,53 @@ impl GrammarEngine {
         Err(GrammarError::LanguageInference(PathBuf::from(path)))
     }
 
-    pub fn loaded_language_ids(&self) -> Vec<&str> {
+    pub fn loaded_language_ids(&self) -> impl Iterator<Item = &str> {
         self.entries
             .iter()
             .filter(|(_, e)| e.is_loaded())
             .map(|(x, _)| x.as_str())
-            .collect()
     }
-
     pub fn language_summaries(&self) -> Vec<LanguageSummary> {
         self.entries.values().map(LanguageSummary::from).collect()
-    }
-
-    pub fn loaded_languages(&self) -> LoadedLanguages<'_> {
-        LoadedLanguages {
-            iter: self.entries.iter(),
-        }
-    }
-}
-
-pub struct LoadedLanguages<'a> {
-    iter: std::collections::hash_map::Iter<'a, String, LanguageEntry>,
-}
-
-impl<'a> Iterator for LoadedLanguages<'a> {
-    type Item = &'a str;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter
-            .find_map(|(id, entry)| entry.is_loaded().then_some(id.as_str()))
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, self.iter.size_hint().1)
     }
 }
 
 impl GrammarEngine {
-    pub fn dump_ast(
+    pub fn dump_ast<R>(
         &self,
         path: &str,
         language: Option<&str>,
-        range: Option<&ByteRange>,
-    ) -> Result<String, GrammarError> {
+        range: Option<R>,
+    ) -> Result<String, GrammarError>
+    where
+        R: RangeBounds<usize>,
+    {
         let (_source, tree) = self.load_tree(path, language)?;
         let root = apply_range(tree.root_node(), range);
         Ok(root.to_sexp())
     }
 }
 
-pub(crate) fn apply_range<'a>(root: Node<'a>, range: Option<&ByteRange>) -> Node<'a> {
+use std::ops::{Bound, RangeBounds};
+
+pub(crate) fn apply_range<'a, R>(root: Node<'a>, range: Option<R>) -> Node<'a>
+where
+    R: RangeBounds<usize>,
+{
     match range {
-        Some(r) => root
-            .descendant_for_byte_range(r.start, r.end)
-            .unwrap_or(root),
+        Some(r) => {
+            let start = match r.start_bound() {
+                Bound::Included(&s) => s,
+                Bound::Excluded(&s) => s + 1,
+                Bound::Unbounded => 0,
+            };
+            let end = match r.end_bound() {
+                Bound::Included(&e) => e + 1,
+                Bound::Excluded(&e) => e,
+                Bound::Unbounded => usize::MAX,
+            };
+            root.descendant_for_byte_range(start, end).unwrap_or(root)
+        }
         None => root,
     }
 }

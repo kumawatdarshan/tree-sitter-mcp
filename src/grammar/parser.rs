@@ -1,43 +1,33 @@
 use rmcp::schemars;
-use serde::{Deserialize, Serialize};
-use std::fmt;
+use serde::Serialize;
 use tree_sitter::{Node, Parser};
 
 use crate::grammar::{LanguageEntry, error::GrammarError};
 
-#[derive(Debug, Clone, Copy, Deserialize, schemars::JsonSchema, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ByteRange {
-    pub(crate) start: usize,
-    pub(crate) end: usize,
+#[derive(Debug, Serialize, schemars::JsonSchema)]
+#[serde(remote = "tree_sitter::Point")]
+pub struct PointDef {
+    pub row: usize,
+    pub column: usize,
+}
+
+#[derive(Serialize, schemars::JsonSchema)]
+#[serde(remote = "tree_sitter::Range")]
+pub struct RangeDef {
+    pub start_byte: usize,
+    pub end_byte: usize,
+    #[serde(with = "PointDef")]
+    pub start_point: tree_sitter::Point,
+    #[serde(with = "PointDef")]
+    pub end_point: tree_sitter::Point,
 }
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct NodeInfo {
     pub(crate) kind: String,
-    pub(crate) start_byte: usize,
-    pub(crate) end_byte: usize,
-    pub(crate) start_point: (usize, usize),
-    pub(crate) end_point: (usize, usize),
+    #[serde(with = "RangeDef")]
+    pub(crate) range: tree_sitter::Range,
     pub(crate) text: String,
-}
-
-impl fmt::Display for NodeInfo {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}@{}..{}: {}",
-            self.kind,
-            self.start_byte,
-            self.end_byte,
-            truncated_text(&self.text)
-        )
-    }
-}
-
-impl fmt::Display for ByteRange {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}..{}", self.start, self.end)
-    }
 }
 
 pub(crate) fn node_text(node: Node<'_>, source: &str) -> String {
@@ -54,10 +44,7 @@ impl<'a> From<(Node<'a>, &'a str)> for NodeInfo {
     fn from((node, source): (Node<'a>, &'a str)) -> Self {
         Self {
             kind: node.kind().to_string(),
-            start_byte: node.start_byte(),
-            end_byte: node.end_byte(),
-            start_point: (node.start_position().row, node.start_position().column),
-            end_point: (node.end_position().row, node.end_position().column),
+            range: node.range(),
             text: node_text(node, source),
         }
     }

@@ -44,15 +44,15 @@ impl LanguageEntry {
             .any(|e| matches!(e, ExtensionEntry::Ext(s) if s == ext))
     }
 
-    pub(super) fn matches_path(&self, path: &Path) -> Result<bool, GrammarError> {
+    pub(super) fn matches_path(&self, path: &Path) -> bool {
         for ext_entry in &self.extensions {
             if let ExtensionEntry::Glob { glob } = ext_entry
                 && glob.compile_matcher().is_match(path)
             {
-                return Ok(true);
+                return true;
             }
         }
-        Ok(false)
+        false
     }
 }
 
@@ -71,7 +71,7 @@ pub struct LanguageSummary {
 }
 
 impl LanguageSummary {
-    pub fn new<I>(id: &str, loaded: bool, exts: I) -> Self
+    pub fn new<I>(id: &str, loaded: bool, extensions: I) -> Self
     where
         I: IntoIterator,
         I::Item: Into<String>,
@@ -79,7 +79,7 @@ impl LanguageSummary {
         Self {
             id: id.into(),
             loaded,
-            extensions: exts.into_iter().map(Into::into).collect(),
+            extensions: extensions.into_iter().map(Into::into).collect(),
         }
     }
 }
@@ -107,7 +107,7 @@ impl From<&LanguageEntry> for LanguageSummary {
 
 #[cfg(test)]
 pub(crate) fn entry(id: &str, extensions: &[ExtensionEntry]) -> LanguageEntry {
-    LanguageEntry::new(id, None, extensions.to_vec())
+    LanguageEntry::new(id, None, extensions.iter().cloned())
 }
 
 #[cfg(test)]
@@ -120,53 +120,50 @@ mod tests {
     #[test]
     fn matches_path_for_exact_filename_glob() {
         let lang = entry("toml", &[glob("Cargo.lock")]);
-        assert!(lang.matches_path(Path::new("Cargo.lock")).unwrap());
+        assert!(lang.matches_path(Path::new("Cargo.lock")));
     }
 
     #[test]
     fn exact_filename_glob_does_not_match_unrelated_path() {
         let lang = entry("toml", &[glob("Cargo.lock")]);
-        assert!(!lang.matches_path(Path::new("main.rs")).unwrap());
+        assert!(!lang.matches_path(Path::new("main.rs")));
     }
 
     #[test]
     fn wildcard_glob_matches_variant_filenames() {
         let lang = entry("dockerfile", &[glob("Dockerfile.*")]);
-        assert!(lang.matches_path(Path::new("Dockerfile.prod")).unwrap());
-        assert!(lang.matches_path(Path::new("Dockerfile.dev")).unwrap());
-        assert!(!lang.matches_path(Path::new("Dockerfile")).unwrap());
+        assert!(lang.matches_path(Path::new("Dockerfile.prod")));
+        assert!(lang.matches_path(Path::new("Dockerfile.dev")));
+        assert!(!lang.matches_path(Path::new("Dockerfile")));
     }
 
     #[test]
     fn subdirectory_glob_literal_separator() {
         let lang = entry("systemd", &[glob("systemd/**/*.conf")]);
-        assert!(
-            lang.matches_path(Path::new("systemd/system/my.service.conf"))
-                .unwrap()
-        );
-        assert!(!lang.matches_path(Path::new("etc/systemd/my.conf")).unwrap());
+        assert!(lang.matches_path(Path::new("systemd/system/my.service.conf")));
+        assert!(!lang.matches_path(Path::new("etc/systemd/my.conf")));
     }
 
     #[test]
     fn brace_glob_matches_alternatives() {
         let lang = entry("jsonc", &[glob("{t,j}sconfig.json")]);
-        assert!(lang.matches_path(Path::new("tsconfig.json")).unwrap());
-        assert!(lang.matches_path(Path::new("jsconfig.json")).unwrap());
-        assert!(!lang.matches_path(Path::new("tsconfig")).unwrap());
+        assert!(lang.matches_path(Path::new("tsconfig.json")));
+        assert!(lang.matches_path(Path::new("jsconfig.json")));
+        assert!(!lang.matches_path(Path::new("tsconfig")));
     }
 
     #[test]
     fn dotfile_glob_matches_hidden_file() {
         let lang = entry("env", &[glob(".env"), glob(".env.*")]);
-        assert!(lang.matches_path(Path::new(".env")).unwrap());
-        assert!(lang.matches_path(Path::new(".env.production")).unwrap());
-        assert!(!lang.matches_path(Path::new("env")).unwrap());
+        assert!(lang.matches_path(Path::new(".env")));
+        assert!(lang.matches_path(Path::new(".env.production")));
+        assert!(!lang.matches_path(Path::new("env")));
     }
 
     #[test]
     fn ext_only_entry_does_not_match_path_via_glob() {
         let lang = entry("rust", &[ext("rs"), ext("rsx")]);
-        assert!(!lang.matches_path(Path::new("main.rs")).unwrap());
+        assert!(!lang.matches_path(Path::new("main.rs")));
     }
 
     #[test]
@@ -179,15 +176,8 @@ mod tests {
     #[test]
     fn glob_does_not_match_path_for_different_subdirectory() {
         let lang = entry("bash", &[glob("bash-completion/completions/*")]);
-        assert!(
-            !lang
-                .matches_path(Path::new("other/completions/docker"))
-                .unwrap()
-        );
-        assert!(
-            lang.matches_path(Path::new("bash-completion/completions/docker"))
-                .unwrap()
-        );
+        assert!(!lang.matches_path(Path::new("other/completions/docker")));
+        assert!(lang.matches_path(Path::new("bash-completion/completions/docker")));
     }
 
     #[test]

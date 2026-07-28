@@ -16,14 +16,8 @@ pub enum ConfigError {
     #[error("missing [extensions] table")]
     MissingExtensionsTable,
 
-    #[error("duplicate language key: {0}")]
-    DuplicateKey(String),
-
     #[error("empty extension array for language: {0}")]
     EmptyExtensions(String),
-
-    #[error(r#"bare basename not allowed (use {{ glob = "..." }}): {0} in language {1}"#)]
-    BareBasename(String, String),
 
     #[error("invalid glob pattern '{glob}' for language {language}: {error}")]
     InvalidGlob {
@@ -31,9 +25,6 @@ pub enum ConfigError {
         language: String,
         error: anyhow::Error,
     },
-
-    #[error("{0}")]
-    Unknown(String),
 }
 
 use crate::config::extension::ExtensionMap;
