@@ -82,3 +82,34 @@ impl super::GrammarEngine {
         Ok((source, tree))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tree_sitter::Parser;
+
+    fn rust_root(source: &str) -> tree_sitter::Tree {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_rust::LANGUAGE.into())
+            .expect("rust language should load");
+        parser.parse(source, None).expect("source should parse")
+    }
+
+    #[test]
+    fn node_info_captures_kind_range_and_text() {
+        let source = "fn main() {}";
+        let tree = rust_root(source);
+        let root_node = tree.root_node();
+        let node = root_node
+            .descendant_for_byte_range(3, 7)
+            .expect("identifier should be found");
+
+        let info = NodeInfo::from((node, source));
+
+        assert_eq!(info.kind, "identifier");
+        assert_eq!(info.text, "main");
+        assert_eq!(info.range.start_byte, 3);
+        assert_eq!(info.range.end_byte, 7);
+    }
+}

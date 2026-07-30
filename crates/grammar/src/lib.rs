@@ -1,6 +1,5 @@
 pub(crate) mod error;
 pub(crate) mod find_node;
-pub(crate) mod loader;
 pub(crate) mod parser;
 pub(crate) mod query;
 pub(crate) mod registry;
@@ -9,10 +8,8 @@ pub use error::GrammarError;
 pub use find_node::FindNodeResult;
 pub use parser::NodeInfo;
 pub use query::{Capture, QueryMatch};
-pub use registry::LanguageSummary;
+pub use registry::{LanguageEntry, LanguageSummary};
 
-use self::loader::load_grammar;
-use registry::LanguageEntry;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tree_sitter::Node;
@@ -38,29 +35,37 @@ where
 }
 
 impl GrammarEngine {
-    pub fn load_default() -> Result<Self, GrammarError> {
+    // TODO: need to use tree-sitter-loader crate here
+    pub fn try_new() -> Result<Self, GrammarError> {
         let ext_map = config::load()?;
-        let grammar_dir = config::grammar_dir()?;
 
-        let mut entries = HashMap::new();
+        let loaded = {
+            let grammar_dir = config::grammar_dir()?;
+            let mut loader = tree_sitter_loader::Loader::new()?;
 
-        for (lang, extensions) in ext_map {
-            let so_path = grammar_dir.join(format!("{lang}.so"));
-            let language = if so_path.exists() {
-                match load_grammar(&so_path, &lang) {
-                    Ok(language) => Some(language),
-                    Err(e) => {
-                        tracing::warn!("skipping grammar {lang}: {e}");
-                        None
-                    }
-                }
-            } else {
-                None
-            };
+            loader.languages_at_path(&grammar_dir)?
+        };
 
-            let entry = LanguageEntry::new(&lang, language, extensions);
-            entries.insert(lang, entry);
-        }
+        let language_index: HashMap<&str, tree_sitter::Language> = loaded
+            .iter()
+            .filter_map(|(lang, ident)| Some((ident.strip_prefix("tree_sitter_")?, *lang)))
+            .collect();
+
+        let entries = ext_map
+            .into_iter()
+            .map(
+                |(lang, extensions)| -> Result<(String, LanguageEntry), GrammarError> {
+                    let ts_name = lang.replace('-', "_");
+                    let language = language_index
+                        .get(ts_name.as_str())
+                        .ok_or_else(|| GrammarError::UnknownLanguage(ts_name))
+                        .cloned()?;
+
+                    let entry = LanguageEntry::new(lang.clone(), Some(language), extensions);
+                    Ok((lang, entry))
+                },
+            )
+            .collect()?;
 
         Ok(Self { entries })
     }

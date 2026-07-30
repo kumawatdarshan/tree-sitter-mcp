@@ -12,19 +12,15 @@ pub struct LanguageEntry {
 }
 
 impl LanguageEntry {
-    pub(crate) fn new<I, E>(
-        id: &str,
+    pub fn new(
+        id: String,
         language: Option<tree_sitter::Language>,
-        extensions: I,
-    ) -> Self
-    where
-        I: IntoIterator<Item = E>,
-        E: Into<ExtensionEntry>,
-    {
+        extensions: Vec<ExtensionEntry>,
+    ) -> Self {
         Self {
-            id: id.into(),
+            id,
             language,
-            extensions: extensions.into_iter().map(Into::into).collect(),
+            extensions,
         }
     }
 
@@ -107,7 +103,7 @@ impl From<&LanguageEntry> for LanguageSummary {
 
 #[cfg(test)]
 pub(crate) fn entry(id: &str, extensions: &[ExtensionEntry]) -> LanguageEntry {
-    LanguageEntry::new(id, None, extensions.iter().cloned())
+    LanguageEntry::new(id.to_string(), None, extensions.to_vec())
 }
 
 #[cfg(test)]
