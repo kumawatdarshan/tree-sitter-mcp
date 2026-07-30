@@ -1,262 +1,66 @@
-pub(crate) mod error;
-pub(crate) mod find_node;
-pub(crate) mod parser;
-pub(crate) mod query;
-pub(crate) mod registry;
+pub mod error;
+pub mod find;
+pub mod language;
+pub mod query;
+pub mod session;
 
+pub(crate) mod loader;
+
+use std::path::Path;
+
+use config::extension::ExtensionMap;
 pub use error::GrammarError;
-pub use find_node::FindNodeResult;
-pub use parser::NodeInfo;
+pub use find::FindNodeResult;
+pub use language::{LanguageSummary, LoadedLanguage};
 pub use query::{Capture, QueryMatch};
-pub use registry::{LanguageEntry, LanguageSummary};
+pub use session::{NodeInfo, ParseSession};
 
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use tree_sitter::Node;
+use language::GrammarRegistry;
 
 #[derive(Debug)]
 pub struct GrammarEngine {
-    entries: HashMap<String, LanguageEntry>,
+    registry: GrammarRegistry,
 }
 
-impl<K, V> FromIterator<(K, V)> for GrammarEngine
-where
-    K: Into<String>,
-    V: Into<LanguageEntry>,
-{
-    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
+impl GrammarEngine {
+    pub fn load(ext_map: ExtensionMap, grammar_dir: &Path) -> Result<Self, GrammarError> {
+        let specs = loader::specs_from_config(ext_map);
+        let grammars = loader::discover_grammars(&grammar_dir)?;
+        let (loaded, missing) = loader::join(specs, grammars);
+
+        for spec in missing {
+            tracing::warn!(lang = %spec.id, "no compiled grammar — language unavailable");
+        }
+
+        Ok(Self {
+            registry: GrammarRegistry::new(loaded),
+        })
+    }
+
+    /// Construct from pre-built languages. Useful for tests and embedding.
+    pub fn from_languages(languages: Vec<LoadedLanguage>) -> Self {
         Self {
-            entries: iter
-                .into_iter()
-                .map(|(k, v)| (k.into(), v.into()))
-                .collect(),
+            registry: GrammarRegistry::new(languages),
         }
     }
-}
 
-impl GrammarEngine {
-    // TODO: need to use tree-sitter-loader crate here
-    pub fn try_new() -> Result<Self, GrammarError> {
-        let ext_map = config::load()?;
-
-        let loaded = {
-            let grammar_dir = config::grammar_dir()?;
-            let mut loader = tree_sitter_loader::Loader::new()?;
-
-            loader.languages_at_path(&grammar_dir)?
-        };
-
-        let language_index: HashMap<&str, tree_sitter::Language> = loaded
-            .iter()
-            .filter_map(|(lang, ident)| Some((ident.strip_prefix("tree_sitter_")?, *lang)))
-            .collect();
-
-        let entries = ext_map
-            .into_iter()
-            .map(
-                |(lang, extensions)| -> Result<(String, LanguageEntry), GrammarError> {
-                    let ts_name = lang.replace('-', "_");
-                    let language = language_index
-                        .get(ts_name.as_str())
-                        .ok_or_else(|| GrammarError::UnknownLanguage(ts_name))
-                        .cloned()?;
-
-                    let entry = LanguageEntry::new(lang.clone(), Some(language), extensions);
-                    Ok((lang, entry))
-                },
-            )
-            .collect()?;
-
-        Ok(Self { entries })
-    }
-
-    pub(crate) fn resolve(
-        &self,
-        path: &str,
-        requested: Option<&str>,
-    ) -> Result<&LanguageEntry, GrammarError> {
-        if let Some(id) = requested {
-            return self
-                .entries
-                .get(id)
-                .ok_or_else(|| GrammarError::UnknownLanguage(id.to_string()));
-        }
-
-        let path_buf = Path::new(path);
-
-        if let Some(ext) = path_buf.extension().and_then(|e| e.to_str())
-            && let Some(entry) = self.entries.values().find(|e| e.matches_extension(ext))
-        {
-            return Ok(entry);
-        }
-
-        for entry in self.entries.values() {
-            if entry.matches_path(path_buf) {
-                return Ok(entry);
-            }
-        }
-
-        Err(GrammarError::LanguageInference(PathBuf::from(path)))
-    }
-
-    pub fn loaded_language_ids(&self) -> impl Iterator<Item = &str> {
-        self.entries
-            .iter()
-            .filter(|(_, e)| e.is_loaded())
-            .map(|(x, _)| x.as_str())
-    }
-
-    pub fn language_summaries(&self) -> impl Iterator<Item = LanguageSummary> {
-        self.entries.values().map(LanguageSummary::from)
-    }
-}
-
-impl GrammarEngine {
-    pub fn dump_ast<R>(
+    /// Resolve a language for `path`. Pure — no I/O.
+    ///
+    /// Returns the [`LoadedLanguage`] that matches the file extension
+    /// or glob pattern. Pass an explicit `language` to override inference.
+    pub fn resolve_language(
         &self,
         path: &str,
         language: Option<&str>,
-        range: Option<R>,
-    ) -> Result<String, GrammarError>
-    where
-        R: RangeBounds<usize>,
-    {
-        let (_source, tree) = self.load_tree(path, language)?;
-        let root = apply_range(tree.root_node(), range);
-        Ok(root.to_sexp())
-    }
-}
-
-use std::ops::{Bound, RangeBounds};
-
-pub(crate) fn apply_range<'a, R>(root: Node<'a>, range: Option<R>) -> Node<'a>
-where
-    R: RangeBounds<usize>,
-{
-    match range {
-        Some(r) => {
-            let start = match r.start_bound() {
-                Bound::Included(&s) => s,
-                Bound::Excluded(&s) => s + 1,
-                Bound::Unbounded => 0,
-            };
-            let end = match r.end_bound() {
-                Bound::Included(&e) => e + 1,
-                Bound::Excluded(&e) => e,
-                Bound::Unbounded => usize::MAX,
-            };
-            root.descendant_for_byte_range(start, end).unwrap_or(root)
-        }
-        None => root,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::registry::entry;
-    use config::extension::{ExtensionEntry, ext, glob};
-
-    fn engine(entries: &[(&str, &[ExtensionEntry])]) -> GrammarEngine {
-        entries
-            .iter()
-            .map(|&(id, exts)| (id, entry(id, exts)))
-            .collect()
+    ) -> Result<&LoadedLanguage, GrammarError> {
+        language::resolve(&self.registry, path, language)
     }
 
-    #[test]
-    fn explicit_request_resolves_by_id() {
-        let eng = engine(&[
-            ("rust", &[ext("rs")]),
-            ("toml", &[ext("toml"), glob("Cargo.lock")]),
-        ]);
-        let result = eng.resolve("anything.rs", Some("toml")).unwrap();
-        assert_eq!(result.id, "toml");
+    pub fn language_summaries(&self) -> impl Iterator<Item = LanguageSummary> + '_ {
+        self.registry.values().map(LanguageSummary::from)
     }
 
-    #[test]
-    fn unknown_explicit_request_returns_error() {
-        let eng = engine(&[("rust", &[ext("rs")])]);
-        let err = eng.resolve("main.rs", Some("brainfuck")).unwrap_err();
-        assert!(matches!(err, GrammarError::UnknownLanguage(ref id) if id == "brainfuck"));
-    }
-
-    #[test]
-    fn infers_language_from_extension() {
-        let eng = engine(&[("rust", &[ext("rs")]), ("python", &[ext("py")])]);
-        let result = eng.resolve("main.rs", None).unwrap();
-        assert_eq!(result.id, "rust");
-    }
-
-    #[test]
-    fn infers_language_from_exact_filename_glob() {
-        let eng = engine(&[
-            ("rust", &[ext("rs")]),
-            ("toml", &[ext("toml"), glob("Cargo.lock")]),
-        ]);
-        let result = eng.resolve("Cargo.lock", None).unwrap();
-        assert_eq!(result.id, "toml");
-    }
-
-    #[test]
-    fn infers_language_from_wildcard_glob() {
-        let eng = engine(&[
-            ("python", &[ext("py")]),
-            ("dockerfile", &[glob("Dockerfile.*")]),
-        ]);
-        let result = eng.resolve("Dockerfile.prod", None).unwrap();
-        assert_eq!(result.id, "dockerfile");
-    }
-
-    #[test]
-    fn infers_language_from_subdirectory_glob() {
-        let eng = engine(&[("bash", &[glob("bash-completion/completions/*")])]);
-        let result = eng
-            .resolve("bash-completion/completions/docker", None)
-            .unwrap();
-        assert_eq!(result.id, "bash");
-    }
-
-    #[test]
-    fn extension_match_beats_glob_because_checked_first() {
-        let eng = engine(&[
-            ("glob_only", &[glob("*.txt")]),
-            ("ext_match", &[ext("txt")]),
-        ]);
-        let result = eng.resolve("file.txt", None).unwrap();
-        assert_eq!(result.id, "ext_match");
-    }
-
-    #[test]
-    fn extension_matching_only_checks_ext_entries_not_globs() {
-        let eng = engine(&[("dockerfile", &[glob("Dockerfile.*")])]);
-        let result = eng.resolve("Dockerfile.py", None).unwrap();
-        assert_eq!(result.id, "dockerfile");
-    }
-
-    #[test]
-    fn no_match_returns_language_inference_error() {
-        let eng = engine(&[("rust", &[ext("rs")])]);
-        let err = eng.resolve("unknown.xyz", None).unwrap_err();
-        assert!(matches!(err, GrammarError::LanguageInference(_)));
-    }
-
-    #[test]
-    fn resolve_matches_multiple_extensions_for_same_language() {
-        let eng = engine(&[("cpp", &[ext("cpp"), ext("h"), ext("cc")])]);
-        assert_eq!(eng.resolve("main.cpp", None).unwrap().id, "cpp");
-        assert_eq!(eng.resolve("main.cc", None).unwrap().id, "cpp");
-        assert_eq!(eng.resolve("main.h", None).unwrap().id, "cpp");
-    }
-
-    #[test]
-    fn resolve_matches_first_matching_entry_by_extension() {
-        let eng = engine(&[
-            ("ruby", &[ext("rb")]),
-            ("python", &[ext("py")]),
-            ("perl", &[ext("pl"), ext("pm")]),
-        ]);
-        assert_eq!(eng.resolve("script.pl", None).unwrap().id, "perl");
-        assert_eq!(eng.resolve("script.py", None).unwrap().id, "python");
+    pub fn loaded_language_ids(&self) -> impl Iterator<Item = &str> {
+        self.registry.values().map(|l| l.id.as_str())
     }
 }

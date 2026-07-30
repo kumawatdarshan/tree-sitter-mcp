@@ -1,13 +1,12 @@
+use std::fmt;
+use std::ops::RangeBounds;
+
 use schemars;
 use serde::Serialize;
-use std::{fmt, ops::RangeBounds};
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
-use crate::{
-    apply_range,
-    error::GrammarError,
-    parser::{NodeInfo, truncated_text},
-};
+use crate::error::GrammarError;
+use crate::session::{NodeInfo, ParseSession, apply_range, truncated_text};
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct Capture {
@@ -44,27 +43,17 @@ impl fmt::Display for QueryMatch {
     }
 }
 
-impl super::GrammarEngine {
-    pub fn run_query<R>(
+impl ParseSession {
+    pub fn run_query<R: RangeBounds<usize>>(
         &self,
-        path: &str,
-        language: Option<&str>,
         query_str: &str,
         range: Option<R>,
-    ) -> Result<Vec<QueryMatch>, GrammarError>
-    where
-        R: RangeBounds<usize>,
-    {
-        let entry = self.resolve(path, language)?;
-        let (source, tree) = self.load_tree_for_entry(entry, path)?;
-        let root = apply_range(tree.root_node(), range);
-
-        let lang = entry.language()?;
-
-        let query = Query::new(lang, query_str)?;
+    ) -> Result<Vec<QueryMatch>, GrammarError> {
+        let root = apply_range(self.tree.root_node(), range);
+        let query = Query::new(&self.language.language, query_str)?;
 
         let mut cursor = QueryCursor::new();
-        let mut matches_iter = cursor.matches(&query, root, source.as_bytes());
+        let mut matches_iter = cursor.matches(&query, root, self.source.as_bytes());
         let mut matches = Vec::new();
 
         while let Some(m) = matches_iter.next() {
@@ -73,7 +62,7 @@ impl super::GrammarEngine {
                 .iter()
                 .map(|c| Capture {
                     name: query.capture_names()[c.index as usize].to_string(),
-                    node: NodeInfo::from((c.node, source.as_str())),
+                    node: NodeInfo::from((c.node, self.source.as_str())),
                 })
                 .collect();
             matches.push(QueryMatch {

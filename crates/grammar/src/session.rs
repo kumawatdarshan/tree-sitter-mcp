@@ -1,8 +1,11 @@
+use std::ops::{Bound, RangeBounds};
+
 use schemars;
 use serde::Serialize;
 use tree_sitter::{Node, Parser};
 
-use crate::{LanguageEntry, error::GrammarError};
+use crate::error::GrammarError;
+use crate::language::LoadedLanguage;
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 #[serde(remote = "tree_sitter::Point")]
@@ -22,6 +25,7 @@ pub struct RangeDef {
     pub end_point: tree_sitter::Point,
 }
 
+/// Shared node view used by query and find operations.
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct NodeInfo {
     pub(crate) kind: String,
@@ -30,56 +34,72 @@ pub struct NodeInfo {
     pub(crate) text: String,
 }
 
-pub(crate) fn node_text(node: Node<'_>, source: &str) -> String {
-    node.utf8_text(source.as_bytes())
-        .unwrap_or("<invalid utf8>")
-        .to_string()
+impl<'a> From<(Node<'a>, &'a str)> for NodeInfo {
+    fn from((node, source): (Node<'a>, &'a str)) -> Self {
+        Self {
+            kind: node.kind().to_string(),
+            range: node.range(),
+            text: node
+                .utf8_text(source.as_bytes())
+                .unwrap_or("<invalid utf8>")
+                .to_string(),
+        }
+    }
 }
 
 pub(crate) fn truncated_text(text: &str) -> String {
     text.chars().take(50).collect()
 }
 
-impl<'a> From<(Node<'a>, &'a str)> for NodeInfo {
-    fn from((node, source): (Node<'a>, &'a str)) -> Self {
-        Self {
-            kind: node.kind().to_string(),
-            range: node.range(),
-            text: node_text(node, source),
+pub(crate) fn apply_range<'a, R: RangeBounds<usize>>(root: Node<'a>, range: Option<R>) -> Node<'a> {
+    match range {
+        Some(r) => {
+            let start = match r.start_bound() {
+                Bound::Included(&s) => s,
+                Bound::Excluded(&s) => s + 1,
+                Bound::Unbounded => 0,
+            };
+            let end = match r.end_bound() {
+                Bound::Included(&e) => e + 1,
+                Bound::Excluded(&e) => e,
+                Bound::Unbounded => usize::MAX,
+            };
+            root.descendant_for_byte_range(start, end).unwrap_or(root)
         }
+        None => root,
     }
 }
 
-impl super::GrammarEngine {
-    pub(crate) fn load_tree(
-        &self,
-        path: &str,
-        language: Option<&str>,
-    ) -> Result<(String, tree_sitter::Tree), GrammarError> {
-        let entry = self.resolve(path, language)?;
-        self.load_tree_for_entry(entry, path)
-    }
+/// A parsed source file, ready for tree-sitter operations.
+///
+/// Created via [`ParseSession::new`]. Borrows the language from
+/// the engine and owns the source text + parse tree.
+pub struct ParseSession {
+    pub(crate) language: LoadedLanguage,
+    pub(crate) source: String,
+    pub(crate) tree: tree_sitter::Tree,
+}
 
-    pub(crate) fn load_tree_for_entry(
-        &self,
-        entry: &LanguageEntry,
-        path: &str,
-    ) -> Result<(String, tree_sitter::Tree), GrammarError> {
-        let lang = entry.language()?;
-
-        let source = std::fs::read_to_string(path)
-            .map_err(|e| GrammarError::SourceRead(std::path::PathBuf::from(path), e))?;
-
+impl ParseSession {
+    pub fn new(language: LoadedLanguage, source: String) -> Result<Self, GrammarError> {
         let mut parser = Parser::new();
         parser
-            .set_language(lang)
+            .set_language(&language.language)
             .map_err(GrammarError::SetLanguage)?;
 
-        let tree = parser
-            .parse(&source, None)
-            .ok_or(GrammarError::ParseReturnedNoTree)?;
+        // TODO: i think it cannot return a None state due to existing checks.
+        let tree = parser.parse(&source, None).unwrap();
 
-        Ok((source, tree))
+        Ok(Self {
+            language,
+            source,
+            tree,
+        })
+    }
+
+    /// Dump the S-expression AST, optionally restricted to a byte range.
+    pub fn dump_ast<R: RangeBounds<usize>>(&self, range: Option<R>) -> String {
+        apply_range(self.tree.root_node(), range).to_sexp()
     }
 }
 

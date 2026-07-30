@@ -2,26 +2,29 @@ mod common;
 
 #[test]
 fn dump_ast_returns_source_file_sexp() {
-    let path = common::fixture_path();
-    let path_str = path.to_str().expect("fixture path must be valid UTF-8");
+    let source = common::fixture_source();
+    let lang = common::engine_with_rust()
+        .resolve_language("test.rs", Some("rust"))
+        .expect("language should resolve");
 
-    let ast = common::engine_with_rust()
-        .open(path_str, Some("rust"))
-        .expect("open should succeed")
-        .dump_ast(common::NONE_RANGE);
+    let session = grammar::ParseSession::new(lang, source)
+        .expect("parse should succeed");
+    let ast = session.dump_ast(common::NONE_RANGE);
+    eprintln!("ast sexp (first 500): {:.500}", ast);
 
-    assert!(ast.contains("source_file"));
-    assert!(ast.contains("function_item"));
+    assert!(ast.contains("source_file"), "expected source_file in ast");
+    assert!(ast.contains("function_item"), "expected function_item in ast");
 }
 
 #[test]
 fn dump_ast_preserves_tree_sitter_error_recovery() {
-    let path = common::fixture_path();
-    let path_str = path.to_str().expect("fixture path must be valid UTF-8");
+    let source = common::fixture_source();
+    let lang = common::engine_with_rust()
+        .resolve_language("test.rs", Some("rust"))
+        .expect("language should resolve");
 
-    let ast = common::engine_with_rust()
-        .open(path_str, Some("rust"))
-        .expect("open should succeed")
+    let ast = grammar::ParseSession::new(lang, source)
+        .expect("parse should succeed")
         .dump_ast(common::NONE_RANGE);
 
     assert!(ast.contains("ERROR"));
@@ -37,12 +40,13 @@ fn dump_ast_can_be_limited_to_a_byte_range() {
         .find("pub fn legacy_calculator")
         .map(|offset| start + offset)
         .expect("fixture should contain following function");
-    let path = common::fixture_path();
-    let path_str = path.to_str().expect("fixture path must be valid UTF-8");
 
-    let ast = common::engine_with_rust()
-        .open(path_str, Some("rust"))
-        .expect("open should succeed")
+    let lang = common::engine_with_rust()
+        .resolve_language("test.rs", Some("rust"))
+        .expect("language should resolve");
+
+    let ast = grammar::ParseSession::new(lang, source.clone())
+        .expect("parse should succeed")
         .dump_ast(Some(start..end));
 
     assert!(ast.contains("fetch_data"));
