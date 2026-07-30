@@ -41,7 +41,7 @@ where
     let source = std::fs::read_to_string(path).expect("fixture source should be readable");
     let path_str = path.to_str().expect("fixture path must be valid UTF-8");
     let lang = engine.resolve_language(path_str, Some("rust"))?;
-    ParseSession::new(lang, source)?.run_query(query_str, range)
+    ParseSession::new(lang.clone(), source)?.run_query(query_str, range)
 }
 
 pub fn run(query_str: &str) -> Result<Vec<QueryMatch>, GrammarError> {
@@ -58,7 +58,7 @@ pub fn find_node(byte: usize) -> Result<FindNodeResult, GrammarError> {
     let source = std::fs::read_to_string(&path).expect("fixture source should be readable");
     let path_str = path.to_str().expect("fixture path must be valid UTF-8");
     let lang = engine_with_rust().resolve_language(path_str, Some("rust"))?;
-    ParseSession::new(lang, source)?.find_node(byte)
+    ParseSession::new(lang.clone(), source)?.find_node(byte)
 }
 
 pub fn fixture_source() -> String {

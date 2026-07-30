@@ -7,13 +7,15 @@ fn dump_ast_returns_source_file_sexp() {
         .resolve_language("test.rs", Some("rust"))
         .expect("language should resolve");
 
-    let session = grammar::ParseSession::new(lang, source)
-        .expect("parse should succeed");
-    let ast = session.dump_ast(common::NONE_RANGE);
-    eprintln!("ast sexp (first 500): {:.500}", ast);
+    let ast = grammar::ParseSession::new(lang.clone(), source)
+        .expect("parse should succeed")
+        .dump_ast(common::NONE_RANGE);
 
     assert!(ast.contains("source_file"), "expected source_file in ast");
-    assert!(ast.contains("function_item"), "expected function_item in ast");
+    assert!(
+        ast.contains("function_item"),
+        "expected function_item in ast"
+    );
 }
 
 #[test]
@@ -23,7 +25,7 @@ fn dump_ast_preserves_tree_sitter_error_recovery() {
         .resolve_language("test.rs", Some("rust"))
         .expect("language should resolve");
 
-    let ast = grammar::ParseSession::new(lang, source)
+    let ast = grammar::ParseSession::new(lang.clone(), source)
         .expect("parse should succeed")
         .dump_ast(common::NONE_RANGE);
 
@@ -45,7 +47,7 @@ fn dump_ast_can_be_limited_to_a_byte_range() {
         .resolve_language("test.rs", Some("rust"))
         .expect("language should resolve");
 
-    let ast = grammar::ParseSession::new(lang, source.clone())
+    let ast = grammar::ParseSession::new(lang.clone(), source)
         .expect("parse should succeed")
         .dump_ast(Some(start..end));
 
