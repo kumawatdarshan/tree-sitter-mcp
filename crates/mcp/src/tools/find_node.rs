@@ -1,3 +1,4 @@
+use grammar::ParseSession;
 use rmcp::{
     handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool, tool_router,
 };
@@ -26,11 +27,11 @@ impl crate::TreeSitterServer {
         &self,
         Parameters(params): Parameters<FindNodeParams>,
     ) -> Result<CallToolResult, McpError> {
-        let result = self.grammar.find_node(
-            &params.file.path,
-            params.file.language.as_deref(),
-            params.byte,
-        )?;
+        let source = std::fs::read_to_string(&params.file.path)?;
+        let lang = self
+            .grammar
+            .resolve_language(&params.file.path, params.file.language.as_deref())?;
+        let result = ParseSession::new(lang.clone(), source)?.find_node(params.byte)?;
 
         json_result(&result, "node info")
     }

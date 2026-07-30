@@ -1,3 +1,5 @@
+use grammar::ParseSession;
+
 use crate::{
     McpError,
     tools::{FileParams, text_result},
@@ -25,11 +27,11 @@ impl crate::TreeSitterServer {
         &self,
         Parameters(params): Parameters<DumpAstParams>,
     ) -> Result<CallToolResult, McpError> {
-        let ast = self.grammar.dump_ast(
-            &params.file.path,
-            params.file.language.as_deref(),
-            params.range,
-        )?;
+        let source = std::fs::read_to_string(&params.file.path)?;
+        let lang = self
+            .grammar
+            .resolve_language(&params.file.path, params.file.language.as_deref())?;
+        let ast = ParseSession::new(lang.clone(), source)?.dump_ast(params.range);
 
         Ok(text_result(ast))
     }

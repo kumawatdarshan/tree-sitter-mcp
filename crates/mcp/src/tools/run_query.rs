@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use grammar::ParseSession;
 use rmcp::{
     handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool, tool_router,
 };
@@ -28,12 +29,12 @@ impl crate::TreeSitterServer {
         &self,
         Parameters(params): Parameters<RunQueryParams>,
     ) -> Result<CallToolResult, McpError> {
-        let matches = self.grammar.run_query(
-            &params.file.path,
-            params.file.language.as_deref(),
-            &params.query,
-            params.range,
-        )?;
+        let source = std::fs::read_to_string(&params.file.path)?;
+        let lang = self
+            .grammar
+            .resolve_language(&params.file.path, params.file.language.as_deref())?;
+        let matches =
+            ParseSession::new(lang.clone(), source)?.run_query(&params.query, params.range)?;
 
         json_result(&matches, "query matches")
     }

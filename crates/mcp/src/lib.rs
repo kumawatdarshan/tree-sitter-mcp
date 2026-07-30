@@ -36,6 +36,9 @@ pub enum McpError {
     #[error(transparent)]
     Grammar(#[from] GrammarError),
 
+    #[error("I/O error: {0}")]
+    Io(#[from] std::io::Error),
+
     #[error(transparent)]
     Rmcp(#[from] ErrorData),
 }
@@ -44,6 +47,7 @@ impl IntoCallToolResult for McpError {
     fn into_call_tool_result(self) -> Result<CallToolResult, ErrorData> {
         Err(match self {
             McpError::Grammar(e) => ErrorData::internal_error(format!("{e}"), None),
+            McpError::Io(e) => ErrorData::internal_error(format!("{e}"), None),
             McpError::Rmcp(e) => e,
         })
     }

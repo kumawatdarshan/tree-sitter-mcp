@@ -11,3 +11,4 @@ grammar.workspace = true
 mcp.workspace = true
 rmcp.workspace = true
 anyhow.workspace = true
+config.workspace = true
