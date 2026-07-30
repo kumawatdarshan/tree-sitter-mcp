@@ -1,0 +1,31 @@
+---
+source: crates/grammar/tests/query_accuracy.rs
+expression: matches
+input_file: fixtures/rust/rust.rs
+---
+[
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "type_identifier",
+          "range": {
+            "start_byte": 2270,
+            "end_byte": 2279,
+            "start_point": {
+              "row": 80,
+              "column": 10
+            },
+            "end_point": {
+              "row": 80,
+              "column": 19
+            }
+          },
+          "text": "Geometric"
+        }
+      }
+    ]
+  }
+]

@@ -11,3 +11,19 @@ config.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+quickcheck = "1"
+quickcheck_macros = "1"
+serde_json.workspace = true
+tree-sitter-rust = "0.24"
+insta.workspace = true
+criterion.workspace = true
+rstest = "0.26.1"
+
+[lib]
+doctest = false
+
+[[bench]]
+name = "queries"
+harness = false

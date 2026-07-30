@@ -1,0 +1,909 @@
+---
+source: crates/grammar/tests/query_accuracy.rs
+expression: matches
+---
+[
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2503,
+            "end_byte": 2506,
+            "start_point": {
+              "row": 92,
+              "column": 11
+            },
+            "end_point": {
+              "row": 92,
+              "column": 14
+            }
+          },
+          "text": "new"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2507,
+            "end_byte": 2508,
+            "start_point": {
+              "row": 92,
+              "column": 15
+            },
+            "end_point": {
+              "row": 92,
+              "column": 16
+            }
+          },
+          "text": "x"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2503,
+            "end_byte": 2506,
+            "start_point": {
+              "row": 92,
+              "column": 11
+            },
+            "end_point": {
+              "row": 92,
+              "column": 14
+            }
+          },
+          "text": "new"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2515,
+            "end_byte": 2516,
+            "start_point": {
+              "row": 92,
+              "column": 23
+            },
+            "end_point": {
+              "row": 92,
+              "column": 24
+            }
+          },
+          "text": "y"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2573,
+            "end_byte": 2582,
+            "start_point": {
+              "row": 96,
+              "column": 11
+            },
+            "end_point": {
+              "row": 96,
+              "column": 20
+            }
+          },
+          "text": "translate"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2594,
+            "end_byte": 2596,
+            "start_point": {
+              "row": 96,
+              "column": 32
+            },
+            "end_point": {
+              "row": 96,
+              "column": 34
+            }
+          },
+          "text": "dx"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2573,
+            "end_byte": 2582,
+            "start_point": {
+              "row": 96,
+              "column": 11
+            },
+            "end_point": {
+              "row": 96,
+              "column": 20
+            }
+          },
+          "text": "translate"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2603,
+            "end_byte": 2605,
+            "start_point": {
+              "row": 96,
+              "column": 41
+            },
+            "end_point": {
+              "row": 96,
+              "column": 43
+            }
+          },
+          "text": "dy"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2672,
+            "end_byte": 2688,
+            "start_point": {
+              "row": 101,
+              "column": 7
+            },
+            "end_point": {
+              "row": 101,
+              "column": 23
+            }
+          },
+          "text": "private_distance"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2696,
+            "end_byte": 2701,
+            "start_point": {
+              "row": 101,
+              "column": 31
+            },
+            "end_point": {
+              "row": 101,
+              "column": 36
+            }
+          },
+          "text": "other"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3131,
+            "end_byte": 3134,
+            "start_point": {
+              "row": 126,
+              "column": 7
+            },
+            "end_point": {
+              "row": 126,
+              "column": 10
+            }
+          },
+          "text": "fmt"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3142,
+            "end_byte": 3143,
+            "start_point": {
+              "row": 126,
+              "column": 18
+            },
+            "end_point": {
+              "row": 126,
+              "column": 19
+            }
+          },
+          "text": "f"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3892,
+            "end_byte": 3895,
+            "start_point": {
+              "row": 154,
+              "column": 7
+            },
+            "end_point": {
+              "row": 154,
+              "column": 10
+            }
+          },
+          "text": "add"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3896,
+            "end_byte": 3897,
+            "start_point": {
+              "row": 154,
+              "column": 11
+            },
+            "end_point": {
+              "row": 154,
+              "column": 12
+            }
+          },
+          "text": "a"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3892,
+            "end_byte": 3895,
+            "start_point": {
+              "row": 154,
+              "column": 7
+            },
+            "end_point": {
+              "row": 154,
+              "column": 10
+            }
+          },
+          "text": "add"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3904,
+            "end_byte": 3905,
+            "start_point": {
+              "row": 154,
+              "column": 19
+            },
+            "end_point": {
+              "row": 154,
+              "column": 20
+            }
+          },
+          "text": "b"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3947,
+            "end_byte": 3956,
+            "start_point": {
+              "row": 158,
+              "column": 13
+            },
+            "end_point": {
+              "row": 158,
+              "column": 22
+            }
+          },
+          "text": "const_add"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3957,
+            "end_byte": 3958,
+            "start_point": {
+              "row": 158,
+              "column": 23
+            },
+            "end_point": {
+              "row": 158,
+              "column": 24
+            }
+          },
+          "text": "a"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3947,
+            "end_byte": 3956,
+            "start_point": {
+              "row": 158,
+              "column": 13
+            },
+            "end_point": {
+              "row": 158,
+              "column": 22
+            }
+          },
+          "text": "const_add"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3965,
+            "end_byte": 3966,
+            "start_point": {
+              "row": 158,
+              "column": 31
+            },
+            "end_point": {
+              "row": 158,
+              "column": 32
+            }
+          },
+          "text": "b"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4047,
+            "end_byte": 4057,
+            "start_point": {
+              "row": 163,
+              "column": 13
+            },
+            "end_point": {
+              "row": 163,
+              "column": 23
+            }
+          },
+          "text": "fetch_data"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4058,
+            "end_byte": 4061,
+            "start_point": {
+              "row": 163,
+              "column": 24
+            },
+            "end_point": {
+              "row": 163,
+              "column": 27
+            }
+          },
+          "text": "url"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4300,
+            "end_byte": 4317,
+            "start_point": {
+              "row": 172,
+              "column": 7
+            },
+            "end_point": {
+              "row": 172,
+              "column": 24
+            }
+          },
+          "text": "legacy_calculator"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4318,
+            "end_byte": 4321,
+            "start_point": {
+              "row": 172,
+              "column": 25
+            },
+            "end_point": {
+              "row": 172,
+              "column": 28
+            }
+          },
+          "text": "val"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4993,
+            "end_byte": 5014,
+            "start_point": {
+              "row": 200,
+              "column": 7
+            },
+            "end_point": {
+              "row": 200,
+              "column": 28
+            }
+          },
+          "text": "process_extra_metrics"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5015,
+            "end_byte": 5027,
+            "start_point": {
+              "row": 200,
+              "column": 29
+            },
+            "end_point": {
+              "row": 200,
+              "column": 41
+            }
+          },
+          "text": "metrics_data"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5399,
+            "end_byte": 5420,
+            "start_point": {
+              "row": 210,
+              "column": 7
+            },
+            "end_point": {
+              "row": 210,
+              "column": 28
+            }
+          },
+          "text": "instrumented_function"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5421,
+            "end_byte": 5426,
+            "start_point": {
+              "row": 210,
+              "column": 29
+            },
+            "end_point": {
+              "row": 210,
+              "column": 34
+            }
+          },
+          "text": "input"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5536,
+            "end_byte": 5561,
+            "start_point": {
+              "row": 215,
+              "column": 7
+            },
+            "end_point": {
+              "row": 215,
+              "column": 32
+            }
+          },
+          "text": "instrumented_with_options"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5562,
+            "end_byte": 5568,
+            "start_point": {
+              "row": 215,
+              "column": 33
+            },
+            "end_point": {
+              "row": 215,
+              "column": 39
+            }
+          },
+          "text": "secret"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5536,
+            "end_byte": 5561,
+            "start_point": {
+              "row": 215,
+              "column": 7
+            },
+            "end_point": {
+              "row": 215,
+              "column": 32
+            }
+          },
+          "text": "instrumented_with_options"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5576,
+            "end_byte": 5586,
+            "start_point": {
+              "row": 215,
+              "column": 47
+            },
+            "end_point": {
+              "row": 215,
+              "column": 57
+            }
+          },
+          "text": "public_val"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5669,
+            "end_byte": 5700,
+            "start_point": {
+              "row": 221,
+              "column": 7
+            },
+            "end_point": {
+              "row": 221,
+              "column": 38
+            }
+          },
+          "text": "uninstrumented_utility_function"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5701,
+            "end_byte": 5704,
+            "start_point": {
+              "row": 221,
+              "column": 39
+            },
+            "end_point": {
+              "row": 221,
+              "column": 42
+            }
+          },
+          "text": "val"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5750,
+            "end_byte": 5778,
+            "start_point": {
+              "row": 226,
+              "column": 7
+            },
+            "end_point": {
+              "row": 226,
+              "column": 35
+            }
+          },
+          "text": "uninstrumented_error_handler"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5779,
+            "end_byte": 5782,
+            "start_point": {
+              "row": 226,
+              "column": 36
+            },
+            "end_point": {
+              "row": 226,
+              "column": 39
+            }
+          },
+          "text": "err"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5922,
+            "end_byte": 5942,
+            "start_point": {
+              "row": 231,
+              "column": 7
+            },
+            "end_point": {
+              "row": 231,
+              "column": 27
+            }
+          },
+          "text": "complex_control_flow"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5949,
+            "end_byte": 5950,
+            "start_point": {
+              "row": 231,
+              "column": 34
+            },
+            "end_point": {
+              "row": 231,
+              "column": 35
+            }
+          },
+          "text": "x"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5922,
+            "end_byte": 5942,
+            "start_point": {
+              "row": 231,
+              "column": 7
+            },
+            "end_point": {
+              "row": 231,
+              "column": 27
+            }
+          },
+          "text": "complex_control_flow"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5955,
+            "end_byte": 5956,
+            "start_point": {
+              "row": 231,
+              "column": 40
+            },
+            "end_point": {
+              "row": 231,
+              "column": 41
+            }
+          },
+          "text": "y"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "fn",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 7803,
+            "end_byte": 7844,
+            "start_point": {
+              "row": 318,
+              "column": 7
+            },
+            "end_point": {
+              "row": 318,
+              "column": 48
+            }
+          },
+          "text": "this_function_has_missing_comma_in_params"
+        }
+      },
+      {
+        "name": "param",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 7845,
+            "end_byte": 7846,
+            "start_point": {
+              "row": 318,
+              "column": 49
+            },
+            "end_point": {
+              "row": 318,
+              "column": 50
+            }
+          },
+          "text": "x"
+        }
+      }
+    ]
+  }
+]

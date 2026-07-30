@@ -1,0 +1,151 @@
+---
+source: crates/grammar/tests/query_accuracy.rs
+expression: matches
+input_file: fixtures/rust/rust.rs
+---
+[
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "type_identifier",
+          "range": {
+            "start_byte": 1588,
+            "end_byte": 1594,
+            "start_point": {
+              "row": 45,
+              "column": 11
+            },
+            "end_point": {
+              "row": 45,
+              "column": 17
+            }
+          },
+          "text": "Config"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "type_identifier",
+          "range": {
+            "start_byte": 1779,
+            "end_byte": 1788,
+            "start_point": {
+              "row": 55,
+              "column": 11
+            },
+            "end_point": {
+              "row": 55,
+              "column": 20
+            }
+          },
+          "text": "Container"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "type_identifier",
+          "range": {
+            "start_byte": 1934,
+            "end_byte": 1947,
+            "start_point": {
+              "row": 62,
+              "column": 18
+            },
+            "end_point": {
+              "row": 62,
+              "column": 31
+            }
+          },
+          "text": "InternalState"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "type_identifier",
+          "range": {
+            "start_byte": 2063,
+            "end_byte": 2068,
+            "start_point": {
+              "row": 68,
+              "column": 11
+            },
+            "end_point": {
+              "row": 68,
+              "column": 16
+            }
+          },
+          "text": "Point"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "type_identifier",
+          "range": {
+            "start_byte": 2162,
+            "end_byte": 2181,
+            "start_point": {
+              "row": 75,
+              "column": 11
+            },
+            "end_point": {
+              "row": 75,
+              "column": 30
+            }
+          },
+          "text": "LinuxSpecificHandle"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "type_identifier",
+          "range": {
+            "start_byte": 3695,
+            "end_byte": 3704,
+            "start_point": {
+              "row": 142,
+              "column": 15
+            },
+            "end_point": {
+              "row": 142,
+              "column": 24
+            }
+          },
+          "text": "SubSystem"
+        }
+      }
+    ]
+  }
+]

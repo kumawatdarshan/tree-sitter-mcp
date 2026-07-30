@@ -1,0 +1,775 @@
+---
+source: crates/grammar/tests/query_accuracy.rs
+expression: matches
+input_file: fixtures/rust/rust.rs
+---
+[
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2403,
+            "end_byte": 2412,
+            "start_point": {
+              "row": 85,
+              "column": 7
+            },
+            "end_point": {
+              "row": 85,
+              "column": 16
+            }
+          },
+          "text": "is_origin"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2503,
+            "end_byte": 2506,
+            "start_point": {
+              "row": 92,
+              "column": 11
+            },
+            "end_point": {
+              "row": 92,
+              "column": 14
+            }
+          },
+          "text": "new"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2573,
+            "end_byte": 2582,
+            "start_point": {
+              "row": 96,
+              "column": 11
+            },
+            "end_point": {
+              "row": 96,
+              "column": 20
+            }
+          },
+          "text": "translate"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2672,
+            "end_byte": 2688,
+            "start_point": {
+              "row": 101,
+              "column": 7
+            },
+            "end_point": {
+              "row": 101,
+              "column": 23
+            }
+          },
+          "text": "private_distance"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2917,
+            "end_byte": 2921,
+            "start_point": {
+              "row": 112,
+              "column": 7
+            },
+            "end_point": {
+              "row": 112,
+              "column": 11
+            }
+          },
+          "text": "area"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2964,
+            "end_byte": 2973,
+            "start_point": {
+              "row": 116,
+              "column": 7
+            },
+            "end_point": {
+              "row": 116,
+              "column": 16
+            }
+          },
+          "text": "perimeter"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3016,
+            "end_byte": 3025,
+            "start_point": {
+              "row": 120,
+              "column": 7
+            },
+            "end_point": {
+              "row": 120,
+              "column": 16
+            }
+          },
+          "text": "is_origin"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3131,
+            "end_byte": 3134,
+            "start_point": {
+              "row": 126,
+              "column": 7
+            },
+            "end_point": {
+              "row": 126,
+              "column": 10
+            }
+          },
+          "text": "fmt"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3771,
+            "end_byte": 3774,
+            "start_point": {
+              "row": 147,
+              "column": 15
+            },
+            "end_point": {
+              "row": 147,
+              "column": 18
+            }
+          },
+          "text": "run"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3892,
+            "end_byte": 3895,
+            "start_point": {
+              "row": 154,
+              "column": 7
+            },
+            "end_point": {
+              "row": 154,
+              "column": 10
+            }
+          },
+          "text": "add"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 3947,
+            "end_byte": 3956,
+            "start_point": {
+              "row": 158,
+              "column": 13
+            },
+            "end_point": {
+              "row": 158,
+              "column": 22
+            }
+          },
+          "text": "const_add"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4047,
+            "end_byte": 4057,
+            "start_point": {
+              "row": 163,
+              "column": 13
+            },
+            "end_point": {
+              "row": 163,
+              "column": 23
+            }
+          },
+          "text": "fetch_data"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4300,
+            "end_byte": 4317,
+            "start_point": {
+              "row": 172,
+              "column": 7
+            },
+            "end_point": {
+              "row": 172,
+              "column": 24
+            }
+          },
+          "text": "legacy_calculator"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4683,
+            "end_byte": 4705,
+            "start_point": {
+              "row": 183,
+              "column": 7
+            },
+            "end_point": {
+              "row": 183,
+              "column": 29
+            }
+          },
+          "text": "linux_only_system_call"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4786,
+            "end_byte": 4810,
+            "start_point": {
+              "row": 189,
+              "column": 7
+            },
+            "end_point": {
+              "row": 189,
+              "column": 31
+            }
+          },
+          "text": "windows_only_system_call"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4866,
+            "end_byte": 4888,
+            "start_point": {
+              "row": 194,
+              "column": 7
+            },
+            "end_point": {
+              "row": 194,
+              "column": 29
+            }
+          },
+          "text": "macos_only_system_call"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 4993,
+            "end_byte": 5014,
+            "start_point": {
+              "row": 200,
+              "column": 7
+            },
+            "end_point": {
+              "row": 200,
+              "column": 28
+            }
+          },
+          "text": "process_extra_metrics"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5399,
+            "end_byte": 5420,
+            "start_point": {
+              "row": 210,
+              "column": 7
+            },
+            "end_point": {
+              "row": 210,
+              "column": 28
+            }
+          },
+          "text": "instrumented_function"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5536,
+            "end_byte": 5561,
+            "start_point": {
+              "row": 215,
+              "column": 7
+            },
+            "end_point": {
+              "row": 215,
+              "column": 32
+            }
+          },
+          "text": "instrumented_with_options"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5669,
+            "end_byte": 5700,
+            "start_point": {
+              "row": 221,
+              "column": 7
+            },
+            "end_point": {
+              "row": 221,
+              "column": 38
+            }
+          },
+          "text": "uninstrumented_utility_function"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5750,
+            "end_byte": 5778,
+            "start_point": {
+              "row": 226,
+              "column": 7
+            },
+            "end_point": {
+              "row": 226,
+              "column": 35
+            }
+          },
+          "text": "uninstrumented_error_handler"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 5922,
+            "end_byte": 5942,
+            "start_point": {
+              "row": 231,
+              "column": 7
+            },
+            "end_point": {
+              "row": 231,
+              "column": 27
+            }
+          },
+          "text": "complex_control_flow"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 6678,
+            "end_byte": 6714,
+            "start_point": {
+              "row": 262,
+              "column": 7
+            },
+            "end_point": {
+              "row": 262,
+              "column": 43
+            }
+          },
+          "text": "this_function_has_infinite_recursion"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 6779,
+            "end_byte": 6813,
+            "start_point": {
+              "row": 266,
+              "column": 7
+            },
+            "end_point": {
+              "row": 266,
+              "column": 41
+            }
+          },
+          "text": "this_function_has_unreachable_code"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 6875,
+            "end_byte": 6902,
+            "start_point": {
+              "row": 272,
+              "column": 7
+            },
+            "end_point": {
+              "row": 272,
+              "column": 34
+            }
+          },
+          "text": "this_function_has_dead_code"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 6975,
+            "end_byte": 7006,
+            "start_point": {
+              "row": 278,
+              "column": 7
+            },
+            "end_point": {
+              "row": 278,
+              "column": 38
+            }
+          },
+          "text": "this_function_has_infinite_loop"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 7143,
+            "end_byte": 7162,
+            "start_point": {
+              "row": 290,
+              "column": 7
+            },
+            "end_point": {
+              "row": 290,
+              "column": 26
+            }
+          },
+          "text": "test_point_creation"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 7489,
+            "end_byte": 7524,
+            "start_point": {
+              "row": 300,
+              "column": 7
+            },
+            "end_point": {
+              "row": 300,
+              "column": 42
+            }
+          },
+          "text": "this_function_has_missing_semicolon"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 7650,
+            "end_byte": 7681,
+            "start_point": {
+              "row": 310,
+              "column": 7
+            },
+            "end_point": {
+              "row": 310,
+              "column": 38
+            }
+          },
+          "text": "this_function_has_invalid_token"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 7718,
+            "end_byte": 7756,
+            "start_point": {
+              "row": 314,
+              "column": 7
+            },
+            "end_point": {
+              "row": 314,
+              "column": 45
+            }
+          },
+          "text": "this_function_has_double_colon_in_path"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 7803,
+            "end_byte": 7844,
+            "start_point": {
+              "row": 318,
+              "column": 7
+            },
+            "end_point": {
+              "row": 318,
+              "column": 48
+            }
+          },
+          "text": "this_function_has_missing_comma_in_params"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 7889,
+            "end_byte": 7922,
+            "start_point": {
+              "row": 322,
+              "column": 7
+            },
+            "end_point": {
+              "row": 322,
+              "column": 40
+            }
+          },
+          "text": "this_function_has_unclosed_string"
+        }
+      }
+    ]
+  }
+]

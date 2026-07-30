@@ -1,0 +1,79 @@
+---
+source: crates/grammar/tests/query_accuracy.rs
+expression: matches
+input_file: fixtures/rust/rust.rs
+---
+[
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 552,
+            "end_byte": 567,
+            "start_point": {
+              "row": 15,
+              "column": 10
+            },
+            "end_point": {
+              "row": 15,
+              "column": 25
+            }
+          },
+          "text": "MAX_CONNECTIONS"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 587,
+            "end_byte": 605,
+            "start_point": {
+              "row": 16,
+              "column": 6
+            },
+            "end_point": {
+              "row": 16,
+              "column": 24
+            }
+          },
+          "text": "DEFAULT_TIMEOUT_MS"
+        }
+      }
+    ]
+  },
+  {
+    "pattern_index": 0,
+    "captures": [
+      {
+        "name": "name",
+        "node": {
+          "kind": "identifier",
+          "range": {
+            "start_byte": 2299,
+            "end_byte": 2309,
+            "start_point": {
+              "row": 81,
+              "column": 10
+            },
+            "end_point": {
+              "row": 81,
+              "column": 20
+            }
+          },
+          "text": "DIMENSIONS"
+        }
+      }
+    ]
+  }
+]
