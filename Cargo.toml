@@ -13,19 +13,23 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.dependencies]
-anyhow = "1.0.104"
-rmcp = { version = "2.2.0", features = ["schemars"] }
-serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.151"
-thiserror = "2.0.19"
-tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
-tokio = { version = "1.53.1", features = ["full"] }
-tempfile = "3"
-tree-sitter-rust = "0.23"
+anyhow = "1.0"
+rmcp = { version = "2.2", features = ["schemars"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1.0", features = ["full"] }
+insta = { version = "1.0", features = ["json", "glob"] }
+criterion = { version = "0.8", features = ["html_reports"] }
 
 ### Local Crates
 
 config = { path = "crates/config" }
 grammar = { path = "crates/grammar" }
 mcp = { path = "crates/mcp" }
+
+[profile.dev.package]
+insta.opt-level = 3
+similar.opt-level = 3

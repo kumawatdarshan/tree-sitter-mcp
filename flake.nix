@@ -68,6 +68,8 @@
     in {
       inherit formatter;
 
+      CARGO_WORKSPACE_DIR = commonArgs.src;
+
       packages = let
         cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
         meta = cargoToml.workspace.metadata.crane or cargoToml.package;
@@ -96,6 +98,7 @@
           packages = with pkgs; [
             just
             cargo-nextest
+            cargo-insta
             cargo-expand
             formatter
           ];

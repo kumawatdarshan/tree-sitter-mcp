@@ -6,3 +6,6 @@ check *args:
 
 fmt:
     nix fmt
+
+insta *args:
+    cargo insta test --review {{args}}
