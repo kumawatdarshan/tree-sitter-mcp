@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Nix flake check
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Determinate Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Cache Nix builds
+        uses: DeterminateSystems/magic-nix-cache-action@v14
+
+      - name: Check flake inputs
+        uses: DeterminateSystems/flake-checker-action@v13
+        with:
+          fail-mode: true
+
+      - name: Run nix flake check
+        run: nix flake check
+
+      - name: Build package
+        run: nix build .

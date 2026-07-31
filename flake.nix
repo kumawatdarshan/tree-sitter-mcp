@@ -36,9 +36,24 @@
       craneLib = crane.mkLib pkgs;
 
       unfilteredRoot = ./.;
+      coreFileset = craneLib.fileset.commonCargoSources unfilteredRoot;
+
       src = pkgs.lib.fileset.toSource {
         root = unfilteredRoot;
-        fileset = craneLib.fileset.commonCargoSources unfilteredRoot;
+        fileset = coreFileset;
+      };
+
+      integrationTestFileset = pkgs.lib.fileset.unions [
+        (unfilteredRoot + "/fixtures")
+        (pkgs.lib.fileset.maybeMissing (unfilteredRoot + "/crates/grammar/tests/snapshots"))
+      ];
+
+      testSrc = pkgs.lib.fileset.toSource {
+        root = unfilteredRoot;
+        fileset = pkgs.lib.fileset.unions [
+          coreFileset
+          integrationTestFileset
+        ];
       };
 
       commonArgs = {
@@ -50,12 +65,14 @@
 
       cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
+      fixtureArgs = commonArgs // {src = testSrc;};
+
       formatter =
         (
           treefmt-nix.lib.evalModule pkgs
           {
             projectRootFile = "flake.nix";
-            settings.excludes = ["tests/fixtures/*"];
+            settings.excludes = ["fixtures/*"];
             programs = {
               alejandra.enable = true;
               taplo.enable = true;
@@ -67,8 +84,6 @@
         .config.build.wrapper;
     in {
       inherit formatter;
-
-      CARGO_WORKSPACE_DIR = commonArgs.src;
 
       packages = let
         cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
@@ -84,10 +99,20 @@
       };
 
       checks = {
+        inherit formatter;
+
         clippy = craneLib.cargoClippy (commonArgs
           // {
             inherit cargoArtifacts;
             cargoClippyExtraArgs = "--lib --bins -- -D warnings";
+          });
+
+        tests = craneLib.cargoNextest (fixtureArgs
+          // {
+            inherit cargoArtifacts;
+            src = testSrc;
+            nativeBuildInputs = commonArgs.nativeBuildInputs ++ [pkgs.cargo-nextest];
+            env.INSTA_UPDATE = "no";
           });
       };
 
