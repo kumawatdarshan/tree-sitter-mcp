@@ -1,23 +1,6 @@
 mod common;
 
-#[test]
-#[ignore]
-fn dump_ast_returns_source_file_sexp() {
-    let source = common::fixture_source();
-    let lang = common::engine_with_rust()
-        .resolve_language("test.rs", Some("rust"))
-        .expect("language should resolve");
-
-    let ast = grammar::ParseSession::new(lang.clone(), source)
-        .expect("parse should succeed")
-        .dump_ast(common::NONE_RANGE);
-
-    assert!(ast.contains("source_file"), "expected source_file in ast");
-    assert!(
-        ast.contains("function_item"),
-        "expected function_item in ast"
-    );
-}
+use insta::assert_snapshot;
 
 #[test]
 fn dump_ast_preserves_tree_sitter_error_recovery() {
@@ -30,29 +13,34 @@ fn dump_ast_preserves_tree_sitter_error_recovery() {
         .expect("parse should succeed")
         .dump_ast(common::NONE_RANGE);
 
-    assert!(ast.contains("ERROR"));
+    assert_snapshot!("dump_ast_preserves_tree_sitter_error_recovery", ast);
 }
 
 #[test]
-#[ignore]
 fn dump_ast_can_be_limited_to_a_byte_range() {
     let source = common::fixture_source();
     let start = source
-        .find("pub async fn fetch_data")
-        .expect("fixture should contain fetch_data");
+        .find("let p = Point::new")
+        .expect("fixture should contain fetch_data body");
     let end = source[start..]
-        .find("pub fn legacy_calculator")
+        .find("Ok(url")
         .map(|offset| start + offset)
-        .expect("fixture should contain following function");
+        .expect("fixture should contain fetch_data body end");
 
     let lang = common::engine_with_rust()
         .resolve_language("test.rs", Some("rust"))
         .expect("language should resolve");
 
-    let ast = grammar::ParseSession::new(lang.clone(), source)
-        .expect("parse should succeed")
-        .dump_ast(Some(start..end));
+    let session = grammar::ParseSession::new(lang.clone(), source).expect("parse should succeed");
+    let full = session.dump_ast(common::NONE_RANGE);
+    let limited = session.dump_ast(Some(start..end));
 
-    assert!(ast.contains("fetch_data"));
-    assert!(!ast.contains("legacy_calculator"));
+    assert!(
+        full.contains(&limited),
+        "range-limited dump should be a sub-expression of the full dump"
+    );
+    assert!(
+        limited.len() < full.len(),
+        "range-limited dump should actually truncate"
+    );
 }

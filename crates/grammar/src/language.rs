@@ -99,6 +99,7 @@ pub(crate) fn resolve<'r>(
 mod tests {
     use super::*;
     use config::extension::{ext, glob};
+    use rstest::rstest;
 
     fn lang(id: &str, exts: &[ExtensionEntry]) -> LoadedLanguage {
         LoadedLanguage {
@@ -112,97 +113,88 @@ mod tests {
         GrammarRegistry::new(entries.iter().map(|&(id, exts)| lang(id, exts)).collect())
     }
 
-    #[test]
-    fn explicit_request_resolves_by_id() {
-        let reg = registry(&[
-            ("rust", &[ext("rs")]),
-            ("toml", &[ext("toml"), glob("Cargo.lock")]),
-        ]);
-        let result = resolve(&reg, "anything.rs", Some("toml")).unwrap();
-        assert_eq!(result.id, "toml");
-    }
+    #[rstest]
+    #[case::extension(
+        &[("rust", &[ext("rs")][..]), ("python", &[ext("py")][..])],
+        "main.rs",
+        None,
+        Ok("rust")
+    )]
+    #[case::exact_filename_glob(
+        &[("rust", &[ext("rs")][..]), ("toml", &[ext("toml"), glob("Cargo.lock")][..])],
+        "Cargo.lock",
+        None,
+        Ok("toml")
+    )]
+    #[case::wildcard_glob(
+        &[("python", &[ext("py")][..]), ("dockerfile", &[glob("Dockerfile.*")][..])],
+        "Dockerfile.prod",
+        None,
+        Ok("dockerfile")
+    )]
+    #[case::glob_matches_dotted_name(
+        &[("dockerfile", &[glob("Dockerfile.*")][..])],
+        "Dockerfile.py",
+        None,
+        Ok("dockerfile")
+    )]
+    #[case::subdirectory_glob(
+        &[("bash", &[glob("bash-completion/completions/*")][..])],
+        "bash-completion/completions/docker",
+        None,
+        Ok("bash")
+    )]
+    #[case::multiple_extensions(
+        &[("cpp", &[ext("cpp"), ext("h"), ext("cc")][..])],
+        "main.h",
+        None,
+        Ok("cpp")
+    )]
+    #[case::distinct_extensions(
+        &[("ruby", &[ext("rb")][..]), ("python", &[ext("py")][..]), ("perl", &[ext("pl"), ext("pm")][..])],
+        "script.pl",
+        None,
+        Ok("perl")
+    )]
+    #[case::extension_beats_glob(
+        &[("glob_only", &[glob("*.txt")][..]), ("ext_match", &[ext("txt")][..])],
+        "file.txt",
+        None,
+        Ok("ext_match")
+    )]
+    #[case::explicit_request(
+        &[("rust", &[ext("rs")][..]), ("toml", &[ext("toml"), glob("Cargo.lock")][..])],
+        "anything.rs",
+        Some("toml"),
+        Ok("toml")
+    )]
+    #[case::unknown_explicit_request(
+        &[("rust", &[ext("rs")][..])],
+        "main.rs",
+        Some("brainfuck"),
+        Err("brainfuck")
+    )]
+    #[case::no_match(
+        &[("rust", &[ext("rs")][..])],
+        "unknown.xyz",
+        None,
+        Err("unknown.xyz")
+    )]
+    fn resolves_language(
+        #[case] entries: &[(&str, &[ExtensionEntry])],
+        #[case] path: &str,
+        #[case] requested: Option<&str>,
+        #[case] expected: Result<&str, &str>,
+    ) {
+        let reg = registry(entries);
+        let result = resolve(&reg, path, requested);
 
-    #[test]
-    fn unknown_explicit_request_returns_error() {
-        let reg = registry(&[("rust", &[ext("rs")])]);
-        let err = resolve(&reg, "main.rs", Some("brainfuck")).unwrap_err();
-        assert!(matches!(err, GrammarError::UnknownLanguage(ref id) if id == "brainfuck"));
-    }
-
-    #[test]
-    fn infers_language_from_extension() {
-        let reg = registry(&[("rust", &[ext("rs")]), ("python", &[ext("py")])]);
-        let result = resolve(&reg, "main.rs", None).unwrap();
-        assert_eq!(result.id, "rust");
-    }
-
-    #[test]
-    fn infers_language_from_exact_filename_glob() {
-        let reg = registry(&[
-            ("rust", &[ext("rs")]),
-            ("toml", &[ext("toml"), glob("Cargo.lock")]),
-        ]);
-        let result = resolve(&reg, "Cargo.lock", None).unwrap();
-        assert_eq!(result.id, "toml");
-    }
-
-    #[test]
-    fn infers_language_from_wildcard_glob() {
-        let reg = registry(&[
-            ("python", &[ext("py")]),
-            ("dockerfile", &[glob("Dockerfile.*")]),
-        ]);
-        let result = resolve(&reg, "Dockerfile.prod", None).unwrap();
-        assert_eq!(result.id, "dockerfile");
-    }
-
-    #[test]
-    fn infers_language_from_subdirectory_glob() {
-        let reg = registry(&[("bash", &[glob("bash-completion/completions/*")])]);
-        let result = resolve(&reg, "bash-completion/completions/docker", None).unwrap();
-        assert_eq!(result.id, "bash");
-    }
-
-    #[test]
-    fn extension_match_beats_glob_because_checked_first() {
-        let reg = registry(&[
-            ("glob_only", &[glob("*.txt")]),
-            ("ext_match", &[ext("txt")]),
-        ]);
-        let result = resolve(&reg, "file.txt", None).unwrap();
-        assert_eq!(result.id, "ext_match");
-    }
-
-    #[test]
-    fn extension_matching_only_checks_ext_entries_not_globs() {
-        let reg = registry(&[("dockerfile", &[glob("Dockerfile.*")])]);
-        let result = resolve(&reg, "Dockerfile.py", None).unwrap();
-        assert_eq!(result.id, "dockerfile");
-    }
-
-    #[test]
-    fn no_match_returns_language_inference_error() {
-        let reg = registry(&[("rust", &[ext("rs")])]);
-        let err = resolve(&reg, "unknown.xyz", None).unwrap_err();
-        assert!(matches!(err, GrammarError::UnknownLanguage(_)));
-    }
-
-    #[test]
-    fn resolve_matches_multiple_extensions_for_same_language() {
-        let reg = registry(&[("cpp", &[ext("cpp"), ext("h"), ext("cc")])]);
-        assert_eq!(resolve(&reg, "main.cpp", None).unwrap().id, "cpp");
-        assert_eq!(resolve(&reg, "main.cc", None).unwrap().id, "cpp");
-        assert_eq!(resolve(&reg, "main.h", None).unwrap().id, "cpp");
-    }
-
-    #[test]
-    fn resolve_matches_first_matching_entry_by_extension() {
-        let reg = registry(&[
-            ("ruby", &[ext("rb")]),
-            ("python", &[ext("py")]),
-            ("perl", &[ext("pl"), ext("pm")]),
-        ]);
-        assert_eq!(resolve(&reg, "script.pl", None).unwrap().id, "perl");
-        assert_eq!(resolve(&reg, "script.py", None).unwrap().id, "python");
+        match expected {
+            Ok(id) => assert_eq!(result.unwrap().id, id),
+            Err(lang) => assert!(matches!(
+                result,
+                Err(GrammarError::UnknownLanguage(ref id)) if id == lang
+            )),
+        }
     }
 }

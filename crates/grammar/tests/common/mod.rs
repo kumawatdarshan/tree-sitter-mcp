@@ -54,11 +54,14 @@ pub fn run_success(query_str: &str) -> Vec<QueryMatch> {
 }
 
 pub fn find_node(byte: usize) -> Result<FindNodeResult, GrammarError> {
-    let path = fixture_path();
-    let source = std::fs::read_to_string(&path).expect("fixture source should be readable");
-    let path_str = path.to_str().expect("fixture path must be valid UTF-8");
+    let source = fixture_source();
+    find_node_in_source(&source, byte)
+}
+
+pub fn find_node_in_source(source: &str, byte: usize) -> Result<FindNodeResult, GrammarError> {
+    let path_str = "test.rs";
     let lang = engine_with_rust().resolve_language(path_str, Some("rust"))?;
-    ParseSession::new(lang.clone(), source)?.find_node(byte)
+    ParseSession::new(lang.clone(), source.to_string())?.find_node(byte)
 }
 
 pub fn fixture_source() -> String {

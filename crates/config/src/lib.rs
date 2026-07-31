@@ -18,13 +18,6 @@ pub enum ConfigError {
 
     #[error("empty extension array for language: {0}")]
     EmptyExtensions(String),
-
-    #[error("invalid glob pattern '{glob}' for language {language}: {error}")]
-    InvalidGlob {
-        glob: String,
-        language: String,
-        error: anyhow::Error,
-    },
 }
 
 use crate::extension::ExtensionMap;

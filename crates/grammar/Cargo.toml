@@ -19,7 +19,7 @@ serde_json.workspace = true
 tree-sitter-rust = "0.24"
 insta.workspace = true
 criterion.workspace = true
-rstest = "0.26.1"
+rstest.workspace = true
 
 [lib]
 doctest = false

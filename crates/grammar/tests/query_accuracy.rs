@@ -21,13 +21,30 @@ fn finds_item_names(#[case] case_name: &str, #[case] query: &str) {
 }
 
 #[test]
-#[ignore]
 fn finds_async_function_with_attributes() {
-    let matches = common::run_success(
-        r#"((attribute_item) @attr
-           .
-           (function_item name: (identifier) @name))"#,
-    );
+    // The fixture's buggy tail makes the tree root an ERROR node, which
+    // breaks top-level `.` (sibling-adjacency) anchoring. Query the valid
+    // portion, where item adjacency is reliable.
+    let source = common::fixture_source();
+    let valid = source
+        .split("// BUGGY PORTION")
+        .next()
+        .expect("fixture should contain the buggy-portion marker");
+
+    let lang = common::engine_with_rust()
+        .resolve_language("test.rs", Some("rust"))
+        .expect("language should resolve");
+
+    let matches = grammar::ParseSession::new(lang.clone(), valid.to_string())
+        .expect("parse should succeed")
+        .run_query(
+            r#"((attribute_item) @attr
+               .
+               (function_item name: (identifier) @name))"#,
+            common::NONE_RANGE,
+        )
+        .expect("query should succeed");
+
     let names: Vec<_> = matches
         .iter()
         .filter_map(|m| {
@@ -55,7 +72,14 @@ fn finds_async_function_with_attributes() {
 
     assert_eq!(
         names,
-        ["instrumented_function", "instrumented_with_options"]
+        [
+            "fetch_data",
+            "linux_only_system_call",
+            "windows_only_system_call",
+            "process_extra_metrics",
+            "instrumented_function",
+            "instrumented_with_options"
+        ]
     );
 }
 
@@ -77,14 +101,22 @@ fn predicate_filter_identifies_async_items() {
     assert_json_snapshot!(matches);
 }
 
-#[test]
-fn captures_no_matches_for_nonexistent_pattern() {
-    let matches = common::run_success("(macro_definition name: (identifier) @name)");
+#[rstest]
+#[case::nonexistent_node_type("(macro_definition name: (identifier) @name)")]
+#[case::empty_query("")]
+#[case::whitespace_only("   ")]
+fn no_match_queries(#[case] query: &str) {
+    let matches = common::run_success(query);
     assert!(matches.is_empty());
 }
 
 #[rstest]
 #[case::unclosed_paren("(unclosed-pattern")]
+#[case::stray_close_paren(")")]
+#[case::bare_capture("@")]
+#[case::unclosed_predicate_string(
+    r#"(function_item name: (identifier) @name) (#eq? @name "unclosed)"#
+)]
 fn invalid_query_returns_query_error(#[case] query: &str) {
     let err = common::run(query).expect_err("query should fail");
     match err {
@@ -95,35 +127,31 @@ fn invalid_query_returns_query_error(#[case] query: &str) {
 
 #[quickcheck]
 fn range_limited_query_never_exceeds_full(end: usize) {
-    let full = common::run_success("(struct_item) @s");
-
-    let end = end % 5000 + 1;
-    let limited = common::run_query(&common::fixture_path(), "(struct_item) @s", Some(0..end))
-        .expect("query should succeed");
-    assert!(limited.len() <= full.len());
-}
-
-#[quickcheck]
-fn range_limited_function_query_never_exceeds_full(end: usize) {
     let source = common::fixture_source();
-    let full = common::run_success("(function_item name: (identifier) @name)");
-
     let end = end % (source.len() + 1);
-    let limited = common::run_query(
-        &common::fixture_path(),
-        "(function_item name: (identifier) @name)",
-        Some(0..end),
-    )
-    .expect("query should succeed");
 
-    assert!(limited.len() <= full.len());
+    for query in [
+        "(struct_item) @s",
+        "(function_item name: (identifier) @name)",
+    ] {
+        let full = common::run_success(query);
+        let limited = common::run_query(&common::fixture_path(), query, Some(0..end))
+            .expect("query should succeed");
+        assert!(limited.len() <= full.len());
+    }
 }
 
 #[quickcheck]
 fn malformed_queries_never_panic(prefix: String, open_parens: usize) {
-    let prefix: String = prefix.chars().take(40).collect();
+    // Strip `;` so a random prefix can't start a query-language comment that
+    // swallows the trailing parens. With trailing (unbalanced) parens the
+    // query is invalid by construction.
+    let prefix: String = prefix.chars().take(40).filter(|c| *c != ';').collect();
     let open_parens = open_parens % 5 + 1;
-    let query = format!("{}{}", "(".repeat(open_parens), prefix);
+    let query = format!("{prefix}{}", "(".repeat(open_parens));
     let result = common::run(&query);
-    assert!(result.is_err());
+    assert!(
+        result.is_err(),
+        "unbalanced query should fail, got success for {query:?}"
+    );
 }

@@ -1,0 +1,56 @@
+---
+source: crates/grammar/tests/find_node.rs
+expression: result
+---
+{
+  "ancestors": [
+    {
+      "kind": "identifier",
+      "range": {
+        "start_byte": 4047,
+        "end_byte": 4057,
+        "start_point": {
+          "row": 163,
+          "column": 13
+        },
+        "end_point": {
+          "row": 163,
+          "column": 23
+        }
+      },
+      "text": "fetch_data"
+    },
+    {
+      "kind": "function_item",
+      "range": {
+        "start_byte": 4034,
+        "end_byte": 4205,
+        "start_point": {
+          "row": 163,
+          "column": 0
+        },
+        "end_point": {
+          "row": 168,
+          "column": 1
+        }
+      },
+      "text": "pub async fn fetch_data(url: &str) -> CrateResult<Vec<u8>> {\n    let p = Point::new(1.0, 2.0);\n    let area = p.area();\n    let _ = area;\n    Ok(url.as_bytes().to_vec())\n}"
+    },
+    {
+      "kind": "ERROR",
+      "range": {
+        "start_byte": 0,
+        "end_byte": 7949,
+        "start_point": {
+          "row": 0,
+          "column": 0
+        },
+        "end_point": {
+          "row": 325,
+          "column": 0
+        }
+      },
+      "text": "//! AI GENERATED TEST FIXTURE\n//! Sample Rust source file used for tree-sitter MCP query and symbol extraction tests.\n//!\n//! Valid portion: lines 1 to before `this_function_has_missing_semicolon`.\n//! Buggy portion: from `this_function_has_missing_semicolon` onwards.\n\nuse std::collections::{HashMap, HashSet};\nuse std::fmt::{self, Debug, Display};\nuse std::path::{Path, PathBuf};\nuse std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};\nuse std::sync::Arc;\n\npub use std::collections::hash_map::Entry as MapEntry;\n\n// Constants & Statics\npub const MAX_CONNECTIONS: u32 = 1024;\nconst DEFAULT_TIMEOUT_MS: u64 = 5_000;\nstatic GLOBAL_REQUEST_COUNT: AtomicUsize = AtomicUsize::new(0);\nstatic SHUTDOWN_FLAG: AtomicBool = AtomicBool::new(false);\n\n// Type Aliases\npub type BoxFuture<'a, T> = std::pin::Pin<Box<dyn std::future::Future<Output = T> + Send + 'a>>;\npub type CrateResult<T> = Result<T, CrateError>;\n\n// Enums & Variants (with serde and derive annotations)\n#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n#[serde(tag = \"strategy\", rename_all = \"snake_case\")]\npub enum RetryStrategy {\n    None,\n    Fixed { interval_ms: u64 },\n    Exponential { base_ms: u64, max_ms: u64, jitter: bool },\n    Custom { max_retries: u32 },\n}\n\n#[derive(Debug)]\npub enum CrateError {\n    Io { path: PathBuf, source: std::io::Error },\n    Serialization(String),\n    Validation { field: String, reason: String },\n    Timeout { operation: String, elapsed: std::time::Duration },\n    Custom(String),\n}\n\n// Structs & Fields (Public, Private, Crate, Super, Generics, Lifetimes)\n#[derive(Debug, Clone)]\npub struct Config {\n    pub name: String,\n    pub version: u32,\n    pub debug: bool,\n    pub features: HashSet<String>,\n    pub max_retries: u32,\n    pub timeout_ms: u64,\n}\n\n#[derive(Debug)]\npub struct Container<T: Debug> {\n    value: T,\n    pub label: String,\n    created_at: std::time::Instant,\n    metadata: HashMap<String, String>,\n}\n\npub(crate) struct InternalState {\n    pub(super) active_connections: usize,\n    flag: bool,\n}\n\n#[derive(Debug, Clone, Copy, PartialEq)]\npub struct Point {\n    pub x: f64,\n    pub y: f64,\n}\n\n#[cfg(target_os = \"linux\")]\n#[derive(Debug)]\npub struct LinuxSpecificHandle {\n    pub fd: i32,\n}\n\n// Traits with Associated Constants, Types, and Methods\npub trait Geometric: Debug {\n    const DIMENSIONS: u32 = 2;\n    type Output;\n    fn area(&self) -> f64;\n    fn perimeter(&self) -> f64;\n    fn is_origin(&self) -> bool {\n        false\n    }\n}\n\n// Struct Implementations\nimpl Point {\n    pub fn new(x: f64, y: f64) -> Self {\n        Self { x, y }\n    }\n\n    pub fn translate(&mut self, dx: f64, dy: f64) {\n        self.x += dx;\n        self.y += dy;\n    }\n\n    fn private_distance(&self, other: &Point) -> f64 {\n        let dx = self.x - other.x;\n        let dy = self.y - other.y;\n        (dx * dx + dy * dy).sqrt()\n    }\n}\n\n// Trait Implementations\nimpl Geometric for Point {\n    type Output = f64;\n\n    fn area(&self) -> f64 {\n        0.0\n    }\n\n    fn perimeter(&self) -> f64 {\n        0.0\n    }\n\n    fn is_origin(&self) -> bool {\n        self.x == 0.0 && self.y == 0.0\n    }\n}\n\nimpl Display for RetryStrategy {\n    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {\n        match self {\n            RetryStrategy::None => write!(f, \"none\"),\n            RetryStrategy::Fixed { interval_ms } => write!(f, \"fixed({interval_ms}ms)\"),\n            RetryStrategy::Exponential { base_ms, max_ms, jitter } => {\n                write!(f, \"exponential({base_ms}ms..{max_ms}ms, jitter={jitter})\")\n            }\n            RetryStrategy::Custom { max_retries } => write!(f, \"custom({max_retries})\"),\n        }\n    }\n}\n\n// Submodules\npub mod internal {\n    use super::*;\n\n    pub struct SubSystem {\n        pub id: u64,\n    }\n\n    impl SubSystem {\n        pub fn run(&self) -> bool {\n            true\n        }\n    }\n}\n\n// Functions (Async, Const, Standard, Attributes, Calls)\npub fn add(a: i32, b: i32) -> i32 {\n    a + b\n}\n\npub const fn const_add(a: i32, b: i32) -> i32 {\n    a + b\n}\n\n#[tracing::instrument(level = \"info\")]\npub async fn fetch_data(url: &str) -> CrateResult<Vec<u8>> {\n    let p = Point::new(1.0, 2.0);\n    let area = p.area();\n    let _ = area;\n    Ok(url.as_bytes().to_vec())\n}\n\n#[deprecated(since = \"2.0\", note = \"use add instead\")]\n#[must_use = \"returns result\"]\npub fn legacy_calculator(val: i32) -> i32 {\n    add(val, 10)\n}\n\n// ============================================================================\n// PLATFORM-SPECIFIC FUNCTIONS & CFG MACROS\n// (For TDD queries like \"what functions are unique to linux\")\n// ============================================================================\n\n#[cfg(target_os = \"linux\")]\n#[tracing::instrument]\npub fn linux_only_system_call() -> i32 {\n    0\n}\n\n#[cfg(target_os = \"windows\")]\n#[tracing::instrument]\npub fn windows_only_system_call() -> i32 {\n    1\n}\n\n#[cfg(target_os = \"macos\")]\npub fn macos_only_system_call() -> i32 {\n    2\n}\n\n#[cfg(feature = \"extra_metrics\")]\n#[tracing::instrument(skip(metrics_data))]\npub fn process_extra_metrics(metrics_data: &[u8]) {\n    let _ = metrics_data;\n}\n\n// ============================================================================\n// ATTRIBUTE MACROS & TRACING ANNOTATIONS\n// (For TDD queries like \"find all functions that don't have tracing instrument\")\n// ============================================================================\n\n#[tracing::instrument(level = \"debug\")]\npub fn instrumented_function(input: &str) -> usize {\n    input.len()\n}\n\n#[tracing::instrument(name = \"custom_trace_span\", skip(secret))]\npub fn instrumented_with_options(secret: &str, public_val: i32) -> i32 {\n    let _ = secret;\n    public_val * 2\n}\n\n#[inline(always)]\npub fn uninstrumented_utility_function(val: i32) -> i32 {\n    val + 1\n}\n\n#[cold]\npub fn uninstrumented_error_handler(err: &str) {\n    eprintln!(\"Error occurred: {err}\");\n}\n\n// High-complexity function for testing cognitive/cyclomatic complexity metrics\npub fn complex_control_flow<T, U>(x: T, y: U) -> i32\nwhere\n    T: Into<i32> + Copy,\n    U: TryInto<i32> + Add<Output = U> + Mul<Output = U> + Copy,\n    <U as TryInto<i32>>::Error: std::fmt::Debug,\n{\n\n    let mut result = 0;\n    for i in 0..x {\n        if i % 2 == 0 {\n            result += i;\n            if i > 10 {\n                result *= 2;\n                if i > 20 {\n                    result -= 1;\n                }\n            }\n        } else {\n            match i % 5 {\n                0 => result += 100,\n                1 => result += 50,\n                2 => result += 25,\n                3 => result += 10,\n                _ => result += y,\n            }\n        }\n    }\n    result\n}\n\n// Logical bug patterns for bug identification testing\npub fn this_function_has_infinite_recursion() -> i32 {\n    this_function_has_infinite_recursion()\n}\n\npub fn this_function_has_unreachable_code() -> i32 {\n    return 42;\n    let x = 5;\n    x + 1\n}\n\npub fn this_function_has_dead_code() {\n    if false {\n        println!(\"this never runs\");\n    }\n}\n\npub fn this_function_has_infinite_loop() {\n    while true {\n        // infinite loop\n    }\n}\n\n// Test functions\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn test_point_creation() {\n        let p = Point::new(3.0, 4.0);\n        assert_eq!(p.x, 3.0);\n    }\n}\n\n// ============================================================================\n// BUGGY PORTION (Produces syntax ERROR nodes for tree-sitter error testing)\n// ============================================================================\n\npub fn this_function_has_missing_semicolon() -> i32 {\n    let x = 5\n    x + 1\n}\n\npub fn this_function_has_unmatched_brace() -> i32 {\n    if true {\n        42\n}\n\npub fn this_function_has_invalid_token() {\n    let x = @invalid;\n}\n\npub fn this_function_has_double_colon_in_path() {\n    let x = std::io::::stdin();\n}\n\npub fn this_function_has_missing_comma_in_params(x: i32 y: i32) -> i32 {\n    x + y\n}\n\npub fn this_function_has_unclosed_string() {\n    let s = \"hello;\n}\n"
+    }
+  ]
+}

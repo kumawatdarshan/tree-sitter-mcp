@@ -123,6 +123,7 @@ pub fn glob(pattern: &str) -> ExtensionEntry {
 mod tests {
 
     use super::*;
+    use rstest::rstest;
 
     #[test]
     fn rejects_empty_extension_array() {
@@ -159,41 +160,24 @@ x = [{ glob = "[" }]
         assert!(result.is_err());
     }
 
-    #[test]
-    fn rejects_path_separator_in_ext() {
-        let result = ExtensionMap::from_toml_str(
+    #[rstest]
+    #[case::path_separator("a/b")]
+    #[case::star_glob("*.rs")]
+    #[case::question_mark("?")]
+    #[case::bracket("[")]
+    #[case::empty("")]
+    fn rejects_plain_ext(#[case] ext: &str) {
+        let result = ExtensionMap::from_toml_str(&format!(
             r#"
 [extensions]
-x = ["a/b"]
-"#,
-        );
+x = ["{ext}"]
+"#
+        ));
         assert!(result.is_err());
     }
 
     #[test]
-    fn rejects_glob_chars_in_ext() {
-        let result = ExtensionMap::from_toml_str(
-            r#"
-[extensions]
-x = ["*.rs"]
-"#,
-        );
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn rejects_empty_ext_string() {
-        let result = ExtensionMap::from_toml_str(
-            r#"
-[extensions]
-x = [""]
-"#,
-        );
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn parses_valid_ext_and_glob_entries() {
+    fn parses_iterates_and_measures() {
         let toml_str = r#"
 [extensions]
 rust = ["rs", "rsx"]
@@ -202,41 +186,21 @@ python = [{ glob = "*.py" }]
         let map = ExtensionMap::from_toml_str(toml_str).unwrap();
         assert_eq!(map.len(), 2);
         assert!(!map.is_empty());
-    }
 
-    #[test]
-    fn yields_correct_items_via_into_iter() {
-        let toml_str = r#"
-[extensions]
-rust = ["rs"]
-python = [{ glob = "*.py" }]
-"#;
-        let map = ExtensionMap::from_toml_str(toml_str).unwrap();
         let mut pairs: Vec<_> = map.into_iter().collect();
         pairs.sort_by(|a, b| a.0.cmp(&b.0));
 
-        assert_eq!(pairs.len(), 2);
-
         assert_eq!(pairs[0].0, "python");
         assert_eq!(pairs[0].1.len(), 1);
-        assert!(
-            matches!(pairs[0].1[0], ExtensionEntry::Glob { ref glob } if glob.glob() == "*.py")
-        );
+        assert!(matches!(
+            pairs[0].1[0],
+            ExtensionEntry::Glob { ref glob } if glob.glob() == "*.py"
+        ));
 
         assert_eq!(pairs[1].0, "rust");
-        assert_eq!(pairs[1].1.len(), 1);
+        assert_eq!(pairs[1].1.len(), 2);
         assert!(matches!(pairs[1].1[0], ExtensionEntry::Ext(ref s) if s == "rs"));
-    }
-
-    #[test]
-    fn len_and_is_empty() {
-        let toml_str = r#"
-[extensions]
-rust = ["rs"]
-"#;
-        let map = ExtensionMap::from_toml_str(toml_str).unwrap();
-        assert_eq!(map.len(), 1);
-        assert!(!map.is_empty());
+        assert!(matches!(pairs[1].1[1], ExtensionEntry::Ext(ref s) if s == "rsx"));
 
         let empty = ExtensionMap::default();
         assert_eq!(empty.len(), 0);
