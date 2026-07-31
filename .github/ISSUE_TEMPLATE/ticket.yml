@@ -1,0 +1,67 @@
+name: Ticket
+description: Spec-style build ticket — Context, Goal, Scope, Requirements, Verification, Dependencies, References
+title: "[Ticket] "
+labels: ["review:pending"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Build tickets use the repo's canonical spec-style format. Each section maps to a field below.
+        A maintainer applies the `area:*`, `priority:*`, and `queries` (if `.scm` files are touched)
+        labels during triage.
+  - type: textarea
+    attributes:
+      label: Context
+      description: Why this ticket exists — the problem it solves, what it unblocks.
+      placeholder: |
+        Agents currently can't ... , which blocks ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Goal
+      description: The outcome from the user's perspective. One or two sentences.
+      placeholder: |
+        An agent can ... in one tool call.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Scope
+      description: In-scope and out-of-scope, so the ticket can't silently creep.
+      placeholder: |
+        **In scope:** ...
+        **Out of scope:** ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Requirements
+      description: Numbered, each independently verifiable.
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Verification
+      description: How "done" is checked — commands, fixtures, manual steps.
+      placeholder: |
+        - [ ] `just check`
+        - [ ] `just test`
+        - [ ] ...
+  - type: textarea
+    attributes:
+      label: Dependencies
+      description: Blocked by / Blocks — issue numbers and titles, or "None — can start immediately".
+      placeholder: |
+        **Blocked by:** #8 — Core contract types (or "None — can start immediately")
+        **Blocks:** ...
+  - type: textarea
+    attributes:
+      label: References
+      description: Links to the source-of-truth docs — docs/API.md, docs/plan.md, docs/map.md sections.
+      placeholder: |
+        - docs/API.md §...
+        - docs/plan.md §...

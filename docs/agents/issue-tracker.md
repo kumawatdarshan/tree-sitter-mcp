@@ -2,9 +2,55 @@
 
 Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
+## Templates
+
+`.github/ISSUE_TEMPLATE/ticket.yml` (spec-style build tickets), `bug_report.yml`, and `.github/PULL_REQUEST_TEMPLATE.md` are the canonical templates. **CLI-created issues must use the same canonical body format** so web-created and `gh`-created issues are indistinguishable — the template below is the contract.
+
+## Canonical body format
+
+Every ticket body uses the spec-style format, whether created in the web UI or with `gh issue create --body-file`:
+
+```markdown
+## Context
+
+Why this ticket exists — the problem it solves, what it unblocks.
+
+## Goal
+
+The outcome from the user's perspective. One or two sentences.
+
+## Scope
+
+**In scope:** ...
+**Out of scope:** ...
+
+## Requirements
+
+1. ...
+2. ...
+
+## Verification
+
+- [ ] `just check`
+- [ ] `just test`
+- [ ] ...
+
+## Dependencies
+
+**Blocked by:** #8 — Core contract types (or "None — can start immediately")
+**Blocks:** ...
+
+## References
+
+- docs/API.md §...
+- docs/plan.md §...
+```
+
+The web form `ticket.yml` produces this exact structure. Create issues with `gh issue create --title "..." --body-file ticket.md` where `ticket.md` follows the format above, then apply labels.
+
 ## Conventions
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
+- **Create an issue**: `gh issue create --title "..." --body-file <file>`, where `<file>` follows the canonical body format above (see [Templates](#templates)).
 - **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`

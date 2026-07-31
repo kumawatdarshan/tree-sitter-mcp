@@ -1,0 +1,45 @@
+name: Bug report
+description: Something isn't working as documented
+title: "[Bug] "
+labels: ["bug", "review:pending"]
+body:
+  - type: textarea
+    attributes:
+      label: Description
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction
+      description: Minimal source snippet and, for query tools, the S-expression query used. Include the language and file extension.
+      render: markdown
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Tool / surface
+      description: Which part of the server is involved?
+      options:
+        - ping
+        - run_query
+        - dump_ast
+        - find_node
+        - list_languages
+        - describe_fields
+        - Semantic tools (get_symbols, list_symbols, search_symbols, get_symbol_range, get_symbol_members, get_symbol_references)
+        - Resources (tree-sitter://capabilities, tree-sitter://languages)
+        - prompt:query_guide
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Environment
+      description: OS, nix / just, rust toolchain, tree-sitter-mcp version.
+  - type: checkboxes
+    attributes:
+      label: Triage
+      description: Apply the matching labels so triage can route this (a maintainer finalizes).
+      options:
+        - label: "`queries` — touches per-language `.scm` query files"
