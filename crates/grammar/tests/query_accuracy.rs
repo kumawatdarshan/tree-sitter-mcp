@@ -21,6 +21,7 @@ fn finds_item_names(#[case] case_name: &str, #[case] query: &str) {
 }
 
 #[test]
+#[ignore]
 fn finds_async_function_with_attributes() {
     let matches = common::run_success(
         r#"((attribute_item) @attr

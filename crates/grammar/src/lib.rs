@@ -25,7 +25,7 @@ pub struct GrammarEngine {
 impl GrammarEngine {
     pub fn load(ext_map: ExtensionMap, grammar_dir: &Path) -> Result<Self, GrammarError> {
         let specs = loader::specs_from_config(ext_map);
-        let grammars = loader::discover_grammars(&grammar_dir)?;
+        let grammars = loader::discover_grammars(grammar_dir)?;
         let (loaded, missing) = loader::join(specs, grammars);
 
         for spec in missing {

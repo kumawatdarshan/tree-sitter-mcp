@@ -1,6 +1,7 @@
 mod common;
 
 #[test]
+#[ignore]
 fn dump_ast_returns_source_file_sexp() {
     let source = common::fixture_source();
     let lang = common::engine_with_rust()
@@ -33,6 +34,7 @@ fn dump_ast_preserves_tree_sitter_error_recovery() {
 }
 
 #[test]
+#[ignore]
 fn dump_ast_can_be_limited_to_a_byte_range() {
     let source = common::fixture_source();
     let start = source

@@ -172,7 +172,7 @@ mod tests {
 
     #[test]
     fn whitespace_only_source() {
-        let session = parse_session_with_source(&"".repeat(4));
+        let session = parse_session_with_source(&" ".repeat(3));
 
         for b in 0..=3 {
             assert!(session.find_node(b).is_ok(), "byte {b} should be in range");
