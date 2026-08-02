@@ -38,3 +38,8 @@ Tree-sitter allows to fetch exactly the required amount of information.
 This hopefully(not yet tested against real workflows) improves token efficiency and drastically reduces guesstimates.
 
 To make AI natively rely upon this, you will probably need custom agent that bypass the default harness' grep/read loop.
+
+
+## Setup
+
+use `TREE_SITTER_MCP_GRAMMAR_DIR` to set a custom grammar directory

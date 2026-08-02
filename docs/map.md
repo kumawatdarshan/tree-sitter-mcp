@@ -2,14 +2,14 @@
 
 ## Destination
 
-A general-purpose, multi-language tree-sitter MCP server in Rust (stdio transport) that dynamically loads language grammars from Helix's runtime directory, exposes semantic navigation tools for code analysis, and provides a prompt teaching agents to translate natural language into tree-sitter S-expression queries. Primary consumer: AI coding agents.
+A general-purpose, multi-language tree-sitter MCP server in Rust (stdio transport) that dynamically loads language grammars from the server's own grammar directory, exposes semantic navigation tools for code analysis, and provides a prompt teaching agents to translate natural language into tree-sitter S-expression queries. Primary consumer: AI coding agents.
 
 **API Contract:** [`./API.md`](./API.md)
 
 ## Notes
 
 - **Rust + rmcp** — the server uses `rmcp` 2.2.0 for MCP protocol handling
-- **Helix grammars** — piggyback on Helix's grammar infrastructure (`hx --grammar fetch` / `hx --grammar build`). Users symlink or point the server at Helix's runtime directory. A dedicated CLI for fetching and building grammars is planned.
+- **Own grammar directory** — grammars are compiled shared libraries in the server's own directory (`~/.local/share/tree-sitter-mcp/grammars/`), no third-party editor dependency. A dedicated CLI for fetching and building grammars is planned. Overridable via `--grammar-dir`, `TREE_SITTER_MCP_GRAMMAR_DIR`, or the `grammar_dir` config key.
 - **No caching** — premature optimization. Parse fresh each request.
 - **Named nodes only** — AST output filtered to named nodes, not full leaf nodes
 - **18 tools** — 16 semantic navigation tools (phased P0/P1/P2) + 2 building blocks (run_query, find_node)
@@ -24,7 +24,7 @@ A general-purpose, multi-language tree-sitter MCP server in Rust (stdio transpor
 <!-- the index — one line per closed ticket -->
 
 - **01 tool-surface-design** → single `parse` tool schema (plan §Tool Surface); superseded by the 18-tool contract (API.md §Tools), phased P0/P1/P2
-- **02 grammar-lifecycle** → dlopen compiled grammar `.so`s via `libloading`; `GrammarManager` caches `tree_sitter::Language` (plan §Grammar Loading)
+- **02 grammar-lifecycle** → dlopen compiled grammar libraries via `dlopen2` (`tree_sitter_<name>` constructor derived from filename stem); `GrammarEngine` caches `tree_sitter::Language` per grammar (plan §Grammar Loading)
 - **03 nl-to-s-expression-prompt** → MCP prompt resource teaching S-expression queries, shipped as the `query_guide` prompt (plan §Prompt Resource)
 - **04 ast-serialization** → named-nodes-only JSON, cursor-based traversal with `max_depth` truncation (plan §AST Serialization)
 - **05 mcp-resources** → capabilities and languages as MCP resources (`tree-sitter://capabilities`, `tree-sitter://languages`), not tools (API.md §Capability Negotiation)

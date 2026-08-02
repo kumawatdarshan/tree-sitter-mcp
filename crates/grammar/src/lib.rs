@@ -12,6 +12,7 @@ use config::extension::ExtensionMap;
 pub use error::GrammarError;
 pub use find::FindNodeResult;
 pub use language::{LanguageSummary, LoadedLanguage};
+pub use loader::discover_selected_grammars;
 pub use query::{Capture, QueryMatch};
 pub use session::{NodeInfo, ParseSession};
 
@@ -25,9 +26,11 @@ pub struct GrammarEngine {
 impl GrammarEngine {
     pub fn load(ext_map: ExtensionMap, grammar_dir: &Path) -> Result<Self, GrammarError> {
         let specs = loader::specs_from_config(ext_map);
-        let grammars = loader::discover_grammars(grammar_dir)?;
-        let (loaded, missing) = loader::join(specs, grammars);
+        let (loaded, errors, missing) = loader::join(specs, loader::discover_grammars(grammar_dir));
 
+        for err in errors {
+            tracing::warn!(error = %err, "failed to load grammar library");
+        }
         for spec in missing {
             tracing::warn!(lang = %spec.id, "no compiled grammar — language unavailable");
         }

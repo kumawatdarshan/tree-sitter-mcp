@@ -11,9 +11,9 @@
 This contract uses uniform primitives: one locator type, one
 pagination envelope, one error type, one sparse-fieldset mechanism.
 
-Language support follows Helix's query-convention model: grammars are
-loaded at runtime from Helix's compiled grammar directory (for MVP,
-users symlink their Helix runtime; a dedicated CLI for fetching and
+Language support follows a per-language query-directory model: grammars are
+loaded at runtime from the server's own compiled grammar directory
+(`~/.local/share/tree-sitter-mcp/grammars/`; a dedicated CLI for fetching and
 building grammars is planned). What's *external* is query
 logic only: each language gets a `queries/<language>/*.scm` directory
 containing a fixed set of well-known files (`definitions.scm`,
@@ -674,8 +674,7 @@ server startup by checking, for each `Capability` variant, whether the
 corresponding query file exists under `queries/<language>/` **and**
 compiles successfully against that language's grammar **and** contains
 at least the required capture names for that capability (see Query
-Conventions). This is a deterministic, inspectable check — equivalent to
-`hx --health <lang>` in Helix — not a value any query file declares about
+Conventions). This is a deterministic, inspectable check — not a value any query file declares about
 itself.
 
 `LanguageInfo.name` is this contract's own display string (e.g.
@@ -683,7 +682,7 @@ itself.
 ABI handle with no name of its own (`Language::metadata()` exposes a
 grammar's semver when populated, which is useful for diagnostics but
 unrelated to this field). Each language has exactly one `tree_sitter::Language`
-instance, loaded at runtime from Helix's compiled grammar directory and
+instance, loaded at runtime from the server's own compiled grammar directory and
 registered in a runtime registry — grammars are **not** compiled into
 the server binary; only query logic is. `Symbol.language` is this
 contract's name string, set by whichever grammar's query set produced
@@ -727,14 +726,13 @@ Python legitimately ends up without `Capability::Implementors` (no
 backing structural conformance), expressed as "the file doesn't claim
 that capture," not as a manifest flag anywhere.
 
-Grammars are **loaded at runtime from Helix's compiled grammar
-directory**. At startup, the server discovers the directory (user
-symlink for MVP; a dedicated CLI for fetching and building grammars is
+Grammars are **loaded at runtime from the server's own compiled grammar
+directory**. At startup, the server resolves the directory (config
+`grammar_dir`; a dedicated CLI for fetching and building grammars is
 planned), loads available `.so` files via dynamic linking, and builds a
 runtime registry of `tree_sitter::Language` instances. Only the `.scm`
 query text is read from disk and compiled to a `tree_sitter::Query` at
-server startup, then cached for the process lifetime (mirroring Helix's
-`read_query` + `OnceCell` pattern). A query directory is not a "plugin":
+server startup, then cached for the process lifetime. A query directory is not a "plugin":
 it cannot introduce a new grammar, a new `SymbolKind` variant, or a new
 `Capability` — it can only map an existing grammar's node shapes onto the
 fixed vocabulary below.
@@ -1366,7 +1364,7 @@ per-symbol echo of it.
 | `FilePosition` | `Point` + a `file: String`, via `SerPoint` | Same reasoning. |
 | `SymbolLocator::Position { row, column }` | `Point { row, column }` | 1-indexed on the wire (matching editor/LSP convention); converted to 0-indexed `tree_sitter::Point` internally. |
 | `SymbolKind` | *(no crate equivalent)* — populated via the fixed capture vocabulary above, matched against `Node::kind()` / `Node::kind_id()` inside each `.scm` file's own pattern matching | The crate has no symbol-kind concept; this contract's Query Conventions section is the entire translation layer, and it is centrally defined, not per-language Rust code. |
-| `Symbol.language: String` | *(no crate equivalent)* — each language has one `tree_sitter::Language` loaded at runtime from Helix's compiled grammar directory | `Language` is an opaque, non-serializable ABI handle; never sent over the wire. |
+| `Symbol.language: String` | *(no crate equivalent)* — each language has one `tree_sitter::Language` loaded at runtime from the server's own compiled grammar directory | `Language` is an opaque, non-serializable ABI handle; never sent over the wire. |
 | `LanguageInfo.name` | *(no crate equivalent)* | `Language::metadata()` gives grammar semver, not a name; unused here. |
 | `EditPlan.version_token` | *(conceptually adjacent to)* `Tree` + `InputEdit` | A real `apply()` (out of scope) would use `Tree::edit(&InputEdit)` for incremental re-parse; `version_token` is a placeholder with an explicit staleness caveat, not a checked value. |
 | `Signature`, `Member`, `Reference`, `Complexity`, `Page`, `ApiError`, `Capability`, `RelationPath`, `Investigation` | *(no crate equivalent)* | This project's own semantic layer on top of syntax trees and query results. |

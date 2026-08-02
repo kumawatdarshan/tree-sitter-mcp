@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -8,8 +10,12 @@ pub enum GrammarError {
     #[error("unknown language {0}")]
     UnknownLanguage(String),
 
-    #[error(transparent)]
-    Loader(#[from] tree_sitter_loader::LoaderError),
+    #[error("failed to load grammar library `{path}`")]
+    LoadGrammar {
+        path: PathBuf,
+        #[source]
+        source: LoadGrammarError,
+    },
 
     #[error("failed to set tree-sitter language")]
     SetLanguage(#[source] tree_sitter::LanguageError),
@@ -19,6 +25,28 @@ pub enum GrammarError {
 
     #[error("byte offset {byte} is past end of file ({len} bytes)")]
     ByteOutOfBounds { byte: usize, len: usize },
+}
+
+#[derive(Debug, Error)]
+pub enum LoadGrammarError {
+    #[error("The requested id isn't a language declared in config")]
+    NotConfigured { id: String },
+
+    #[error("grammar library not found: {path}")]
+    LibraryNotFound { id: String, path: PathBuf },
+
+    #[error("could not open shared library")]
+    Open(#[from] dlopen2::Error),
+
+    #[error("constructor symbol `{0}` not found")]
+    MissingSymbol(String, #[source] dlopen2::Error),
+
+    #[error(
+        "incompatible grammar ABI version {abi} (supported {}..={})",
+        tree_sitter::MIN_COMPATIBLE_LANGUAGE_VERSION,
+        tree_sitter::LANGUAGE_VERSION
+    )]
+    IncompatibleAbi { abi: usize },
 }
 
 #[cfg(test)]

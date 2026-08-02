@@ -1,6 +1,6 @@
 # Plan: Tree-Sitter MCP Server
 
-A general-purpose, multi-language tree-sitter MCP server in Rust. Runtime-loaded grammars from Helix's directory. 18 tools (16 semantic + 2 building blocks). stdio transport. Primary consumer: AI coding agents.
+A general-purpose, multi-language tree-sitter MCP server in Rust. Runtime-loaded grammars from the server's own grammar directory. 18 tools (16 semantic + 2 building blocks). stdio transport. Primary consumer: AI coding agents.
 
 **API Contract:** [`./API.md`](./API.md)
 
@@ -16,9 +16,9 @@ thiserror = "2.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tree-sitter = "0.26"
-libloading = "0.8"           # dlopen for grammar .so files
+dlopen2 = { version = "0.9", default-features = false, features = ["symbor"] }  # safe dlopen for grammar libraries
 toml = "0.8"                 # runtime config parsing
-dirs = "6.0"                 # XDG paths for helix runtime discovery
+dirs = "6.0"                 # XDG paths for the server's own grammar directory
 ```
 
 ### Test dependencies
@@ -39,7 +39,7 @@ Testing split:
 - Empty query strings are valid tree-sitter queries that produce zero matches.
 - Unknown predicates are not query-compile errors; predicate semantics must be implemented by the query executor when required.
 
-No `tree-house`. We dlopen grammar `.so` files directly via `libloading`. Each `.so` exports a C function `tree_sitter_<language>()` that returns a `*const ()` we cast to `tree_sitter::LanguageFn`.
+No `tree-house`. We dlopen compiled grammar libraries directly via `dlopen2`. Each library exports a C function `tree_sitter_<language>()` that returns a `tree_sitter::Language`. The symbol name is derived from the library filename: the stem with `-` mapped to `_` (e.g. `c-sharp.so` → `tree_sitter_c_sharp`).
 
 ## Architecture
 
@@ -68,60 +68,27 @@ src/
 
 The extension→language map and grammar directory are runtime-configurable via a TOML file. The server looks for config in this order:
 
-1. `--config <path>` CLI argument
-2. `./tree-sitter-mcp.toml` (current directory)
-3. `~/.config/tree-sitter-mcp/config.toml` (XDG)
-4. Built-in defaults (fallback)
+1. `--grammar-dir <DIR>` CLI argument
+2. `TREE_SITTER_MCP_GRAMMAR_DIR` environment variable
+3. `grammar_dir` key in `~/.config/tree-sitter-mcp/languages.toml` (XDG config dir)
+4. Built-in default: `~/.local/share/tree-sitter-mcp/grammars` (XDG data dir)
+
+> The `grammar_dir` key must appear **before** the `[extensions]` table in the TOML, otherwise it is parsed as a member of `[extensions]`.
 
 ### Config file format
 
 ```toml
-# grammar_dir: where to find compiled grammar .so files
-# Default: auto-detect from Helix runtime directory
-grammar_dir = "~/.cache/helix/runtime/grammars"
-
-# fallback_dirs: additional directories to search if grammar_dir doesn't have a language
-# fallback_dirs = ["/usr/local/lib/tree-sitter"]
+# grammar_dir: where to find compiled grammar libraries (.so/.dylib/.dll)
+# Default: the server's own XDG data directory — ~/.local/share/tree-sitter-mcp/grammars
+grammar_dir = "/absolute/path/to/grammars"
 
 [extensions]
-# Maps file extension → tree-sitter grammar name
-# The grammar name must match a .so file in grammar_dir (e.g., "rust" → "rust.so")
-rs = "rust"
-py = "python"
-ts = "typescript"
-tsx = "tsx"
-js = "javascript"
-jsx = "javascript"
-go = "go"
-c = "c"
-h = "c"
-cpp = "cpp"
-cc = "cpp"
-hpp = "cpp"
-java = "java"
-rb = "ruby"
-ex = "elixir"
-exs = "elixir"
-swift = "swift"
-kt = "kotlin"
-kts = "kotlin"
-lua = "lua"
-json = "json"
-yaml = "yaml"
-yml = "yaml"
-toml = "toml"
-html = "html"
-css = "css"
-scss = "css"
-md = "markdown"
-sql = "proto"
-zig = "zig"
-hs = "haskell"
-sh = "bash"
-bash = "bash"
-make = "make"
-cmake = "cmake"
-dockerfile = "dockerfile"
+# Maps language id → file extensions / glob patterns
+# The language id must match a grammar library stem (e.g. "rust" → "rust.so", "c-sharp" → "c-sharp.so")
+rust = ["rs"]
+python = ["py"]
+c-sharp = ["cs", "csx", "cake"]
+markdown = ["md", { glob = "PULLREQ_EDITMSG" }]
 ```
 
 If no config file is found, the server uses this built-in fallback map (same entries above). Users can override any entry or add new ones by placing a config file.
@@ -131,7 +98,7 @@ If no config file is found, the server uses this built-in fallback map (same ent
 ```rust
 #[derive(Deserialize)]
 pub struct Config {
-    pub grammar_dir: Option<String>,        // helix runtime grammars dir
+    pub grammar_dir: Option<String>,        // server's own grammars dir
     pub fallback_dirs: Vec<String>,         // additional grammar search dirs
     pub extensions: HashMap<String, Vec<String>>, // ext → grammar name
 }
@@ -139,95 +106,49 @@ pub struct Config {
 
 ## Grammar Loading (`grammar/`)
 
-### dlopen approach
+### Discovery + dlopen approach
 
-Each Helix-compiled grammar is a `.so` file at `runtime/grammars/<name>.so`. These `.so` files export a C symbol:
+Each compiled grammar is a shared library in the server's own grammar directory (`grammar_dir`, default `~/.local/share/tree-sitter-mcp/grammars`). The loader scans **top-level** entries only, skips subdirectories (e.g. `sources/`), and keeps files matching the platform's shared-library extension (`.so` on Linux, `.dylib` on macOS, `.dll` on Windows). Each file exports a C symbol:
 
 ```
-tree_sitter_<language> -> extern "C" fn() -> *const ()
+tree_sitter_<name> -> unsafe extern "C" fn() -> tree_sitter::Language
 ```
 
-We load this via `libloading`:
+We load via `dlopen2::symbor`, keeping the library mapped for the process lifetime:
 
 ```rust
-// grammar/dlopen.rs
-use libloading::{Library, Symbol};
-use std::ffi::CStr;
-
-pub struct GrammarLib {
-    _lib: Library,  // prevent unload
-    language_fn: unsafe extern "C" fn() -> *const (),
-}
-
-impl GrammarLib {
-    pub fn load(path: &Path, grammar_name: &str) -> Result<Self> {
-        unsafe {
-            let lib = Library::new(path)?;
-            // tree-sitter convention: symbol name is "tree_sitter_<grammar_name>"
-            let symbol_name = format!("tree_sitter_{}\0", grammar_name);
-            let sym: Symbol<unsafe extern "C" fn() -> *const *> =
-                lib.get(symbol_name.as_bytes())?;
-            Ok(Self { _lib: lib, language_fn: *sym })
-        }
-    }
-
-    pub fn language(&self) -> tree_sitter::Language {
-        unsafe {
-            let ptr = (self.language_fn)();
-            tree_sitter::Language::from_raw(ptr)
-        }
-    }
-}
+// crates/grammar/src/loader.rs (abridged)
+let library = dlopen2::symbor::Library::open(path)?;
+let constructor: dlopen2::symbor::Symbol<unsafe extern "C" fn() -> tree_sitter::Language> =
+    unsafe { library.symbol(&symbol_name)? };
+let language = unsafe { constructor() };
+std::mem::forget(library);  // Language borrows tables/strings from the .so
 ```
+
+- The symbol name is derived from the file stem: `tree_sitter_` + stem with `-` → `_`. Verified against every grammar: `c-sharp.so` → `tree_sitter_c_sharp`, `markdown_inline.so` → `tree_sitter_markdown_inline`.
+- Grammars are keyed by the **normalized** name (`-` → `_`) so config ids like `c-sharp` join to `c_sharp`.
+- ABI gate: only languages with `abi_version()` in `MIN_COMPATIBLE_LANGUAGE_VERSION..=LANGUAGE_VERSION` are kept.
+- A file that fails to open/symbol-lookup/ABI-check is logged (`tracing::warn!`) and skipped — a single bad library can't take down the server.
+- A missing/unreadable `grammar_dir` logs a warning and yields an empty map (server still starts).
 
 ### GrammarManager
 
 ```rust
-// grammar/mod.rs
-pub struct GrammarManager {
-    grammars: HashMap<String, GrammarLib>,  // grammar_name → loaded grammar
-    config: Config,
-}
-
-impl GrammarManager {
-    pub fn new(config: Config) -> Self { ... }
-
-    pub fn language_for_file(&self, path: &Path) -> Option<tree_sitter::Language> {
-        let ext = path.extension()?.to_str()?;
-        let grammar_name = self.config.extensions.get(ext)?;
-        Some(self.get_or_load(grammar_name)?.language())
-    }
-
-    fn get_or_load(&mut self, grammar_name: &str) -> Option<&GrammarLib> {
-        if self.grammars.contains_key(grammar_name) {
-            return self.grammars.get(grammar_name);
-        }
-        // Search grammar_dir, then fallback_dirs for <grammar_name>.so
-        let path = self.find_grammar_file(grammar_name)?;
-        let lib = GrammarLib::load(&path, grammar_name).ok()?;
-        self.grammars.insert(grammar_name.to_string(), lib);
-        self.grammars.get(grammar_name)
-    }
-
-    fn find_grammar_file(&self, name: &str) -> Option<PathBuf> {
-        let filename = format!("{}.so", name);
-        // 1. Check grammar_dir
-        // 2. Check each fallback_dir
-        // Return first match
-    }
-
-    pub fn list_languages(&self) -> Vec<&str> { ... }
+// crates/grammar/src/lib.rs
+pub struct GrammarEngine {
+    registry: GrammarRegistry,
 }
 ```
 
-### Runtime directory discovery
+`GrammarEngine::load` runs three steps: `specs_from_config` (config → specs, no I/O), `discover_grammars` (scan + dlopen), `join` (match specs to discovered grammars; unmatched config entries are returned as `missing` and warned about at startup). `resolve_language(path, requested_id)` is pure, extension-first then glob fallback.
 
-The server auto-discovers Helix's grammar directory:
+### Grammar directory resolution
 
-1. If `grammar_dir` is set in config → use it
-2. Else check `$HELIX_RUNTIME/grammars/`
-3. Else check `~/.cache/helix/runtime/grammars/`
-4. Else check `~/.config/helix/runtime/grammars/`
+The server resolves its grammar directory with this precedence:
+1. `--grammar-dir <DIR>` CLI argument
+2. Else `$TREE_SITTER_MCP_GRAMMAR_DIR` environment variable
+3. Else the `grammar_dir` key in `languages.toml` (XDG config dir)
+4. Else the default data directory: `~/.local/share/tree-sitter-mcp/grammars/` (XDG)
 
 ## Tool Surface
 
@@ -530,7 +451,7 @@ impl From<TreeSitterError> for McpError {
     fn from(e: TreeSitterError) -> Self {
         match e {
             TreeSitterError::GrammarNotFound(name) => McpError::invalid_request(
-                &format!("Grammar '{}' not found. Install it with: hx --grammar fetch && hx --grammar build", name)
+                &format!("Grammar '{}' not found. Run `tree-sitter-mcp grammar install` to provision it.", name)
             ),
             TreeSitterError::ParseError { file, message } => McpError::invalid_request(
                 &format!("Failed to parse {}: {}", file, message)
@@ -585,7 +506,7 @@ async fn main() -> anyhow::Result<()> {
 ## Implementation Order
 
 1. **Scaffold**: `main.rs`, `server.rs` with empty tool, verify it compiles and responds to MCP init
-2. **Config**: `config.rs` — load TOML, parse extensions map, discover helix runtime dir
+2. **Config**: `config.rs` — load TOML, parse extensions map, resolve the server's own grammar dir
 3. **Grammar loading**: `grammar/dlopen.rs` + `grammar/mod.rs` — libloading wrapper, GrammarManager
 4. **AST serialization**: `tools/ast.rs` — cursor-based node_to_json
 5. **parse tool (ast action)**: wire config → grammar → parse → serialize → return
@@ -618,5 +539,5 @@ async fn main() -> anyhow::Result<()> {
     }
   }
   ```
-- **Grammars**: Users must install Helix first (`hx --grammar fetch && hx --grammar build`), then either point `grammar_dir` in config or rely on auto-detection of `~/.cache/helix/runtime/grammars/`
+- **Grammars**: Compiled `.so` grammars live in the server's own grammar directory (`~/.local/share/tree-sitter-mcp/grammars/`). A provisioning CLI (`tree-sitter-mcp grammar install <name>`) fetches and builds grammars into that directory; until then, users drop prebuilt `.so` files there directly.
 - **Safety**: The `libloading` dlopen is `unsafe`. The `GrammarLib` wrapper encapsulates the unsafety. The `tree_sitter::Language::from_raw()` call requires the pointer to be valid — this is guaranteed by tree-sitter's ABI contract.

@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 tree-sitter = "0.26.11"
-tree-sitter-loader = "0.26.11"
+dlopen2 = { version = "0.9", default-features = false, features = ["symbor"] }
 schemars = "1.2.2"
 config.workspace = true
 serde.workspace = true
@@ -13,6 +13,7 @@ thiserror.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
+tempfile.workspace = true
 quickcheck = "1"
 quickcheck_macros = "1"
 serde_json.workspace = true
