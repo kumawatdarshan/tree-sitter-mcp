@@ -11,4 +11,6 @@ globset = "0.4.19"
 etcetera = "0.11.0"
 
 [dev-dependencies]
+temp-env = "0.3.6"
 rstest.workspace = true
+tempfile.workspace = true
