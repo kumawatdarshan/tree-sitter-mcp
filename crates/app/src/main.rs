@@ -17,7 +17,7 @@ async fn main() -> anyhow::Result<()> {
     let ext_map = load(&strategy)?;
     let grammar_dir = grammar_dir(&strategy)?;
 
-    let grammar = Arc::new(GrammarEngine::load(ext_map, &grammar_dir)?);
+    let grammar = Arc::new(GrammarEngine::load(ext_map, &grammar_dir));
     let server = TreeSitterServer::new(grammar);
 
     let transport = (stdin(), stdout());

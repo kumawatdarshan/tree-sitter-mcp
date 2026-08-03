@@ -1,9 +1,6 @@
-use std::collections::HashMap;
 use std::path::Path;
 
 use config::extension::ExtensionEntry;
-
-use crate::error::GrammarError;
 
 #[derive(Debug, Clone)]
 pub struct LoadedLanguage {
@@ -12,7 +9,21 @@ pub struct LoadedLanguage {
     pub language: tree_sitter::Language,
 }
 
-impl LoadedLanguage {
+/// Declared-in-config language spec. Availability without I/O.
+#[derive(Debug, Clone)]
+pub(crate) struct LanguageSpec {
+    pub id: String,
+    pub extensions: Vec<ExtensionEntry>,
+}
+
+impl LanguageSpec {
+    pub(crate) fn new(id: &str, extensions: Vec<ExtensionEntry>) -> Self {
+        Self {
+            id: id.to_owned(),
+            extensions,
+        }
+    }
+
     pub(crate) fn matches_extension(&self, ext: &str) -> bool {
         self.extensions
             .iter()
@@ -24,6 +35,15 @@ impl LoadedLanguage {
             matches!(entry, ExtensionEntry::Glob { glob }
                 if glob.compile_matcher().is_match(path))
         })
+    }
+}
+
+impl From<&LoadedLanguage> for LanguageSpec {
+    fn from(lang: &LoadedLanguage) -> Self {
+        Self {
+            id: lang.id.clone(),
+            extensions: lang.extensions.clone(),
+        }
     }
 }
 
@@ -39,6 +59,15 @@ impl std::fmt::Display for LanguageSummary {
     }
 }
 
+impl From<&LanguageSpec> for LanguageSummary {
+    fn from(spec: &LanguageSpec) -> Self {
+        Self {
+            id: spec.id.clone(),
+            extensions: spec.extensions.iter().map(|e| e.to_string()).collect(),
+        }
+    }
+}
+
 impl From<&LoadedLanguage> for LanguageSummary {
     fn from(lang: &LoadedLanguage) -> Self {
         Self {
@@ -48,153 +77,78 @@ impl From<&LoadedLanguage> for LanguageSummary {
     }
 }
 
-#[derive(Debug)]
-pub(crate) struct GrammarRegistry {
-    by_id: HashMap<String, LoadedLanguage>,
-}
-
-impl GrammarRegistry {
-    pub(crate) fn new(languages: Vec<LoadedLanguage>) -> Self {
-        Self {
-            by_id: languages.into_iter().map(|l| (l.id.clone(), l)).collect(),
-        }
-    }
-
-    pub(crate) fn get(&self, id: &str) -> Option<&LoadedLanguage> {
-        self.by_id.get(id)
-    }
-
-    pub(crate) fn values(&self) -> impl Iterator<Item = &LoadedLanguage> {
-        self.by_id.values()
-    }
-}
-
-/// Resolve a file path (+ optional explicit id) to a loaded language.
-pub(crate) fn resolve<'r>(
-    registry: &'r GrammarRegistry,
-    path: &str,
-    requested: Option<&str>,
-) -> Result<&'r LoadedLanguage, GrammarError> {
-    if let Some(id) = requested {
-        return registry
-            .get(id)
-            .ok_or_else(|| GrammarError::UnknownLanguage(id.to_string()));
-    }
-
-    let p = Path::new(path);
-
-    if let Some(ext) = p.extension().and_then(|e| e.to_str())
-        && let Some(lang) = registry.values().find(|l| l.matches_extension(ext))
-    {
-        return Ok(lang);
-    }
-
-    registry
-        .values()
-        .find(|l| l.matches_path(p))
-        .ok_or_else(|| GrammarError::UnknownLanguage(path.to_owned()))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use config::extension::{ext, glob};
     use rstest::rstest;
 
-    fn lang(id: &str, exts: &[ExtensionEntry]) -> LoadedLanguage {
-        LoadedLanguage {
-            id: id.to_string(),
-            extensions: exts.to_vec(),
-            language: tree_sitter_rust::LANGUAGE.into(),
-        }
+    fn spec(id: &str, exts: &[ExtensionEntry]) -> LanguageSpec {
+        LanguageSpec::new(id, exts.to_vec())
     }
 
-    fn registry(entries: &[(&str, &[ExtensionEntry])]) -> GrammarRegistry {
-        GrammarRegistry::new(entries.iter().map(|&(id, exts)| lang(id, exts)).collect())
+    fn specs(entries: &[(&str, &[ExtensionEntry])]) -> Vec<LanguageSpec> {
+        entries.iter().map(|&(id, exts)| spec(id, exts)).collect()
     }
 
     #[rstest]
     #[case::extension(
         &[("rust", &[ext("rs")][..]), ("python", &[ext("py")][..])],
         "main.rs",
-        None,
-        Ok("rust")
+        "rust"
     )]
     #[case::exact_filename_glob(
         &[("rust", &[ext("rs")][..]), ("toml", &[ext("toml"), glob("Cargo.lock")][..])],
         "Cargo.lock",
-        None,
-        Ok("toml")
+        "toml"
     )]
     #[case::wildcard_glob(
         &[("python", &[ext("py")][..]), ("dockerfile", &[glob("Dockerfile.*")][..])],
         "Dockerfile.prod",
-        None,
-        Ok("dockerfile")
+        "dockerfile"
     )]
     #[case::glob_matches_dotted_name(
         &[("dockerfile", &[glob("Dockerfile.*")][..])],
         "Dockerfile.py",
-        None,
-        Ok("dockerfile")
+        "dockerfile"
     )]
     #[case::subdirectory_glob(
         &[("bash", &[glob("bash-completion/completions/*")][..])],
         "bash-completion/completions/docker",
-        None,
-        Ok("bash")
+        "bash"
     )]
     #[case::multiple_extensions(
         &[("cpp", &[ext("cpp"), ext("h"), ext("cc")][..])],
         "main.h",
-        None,
-        Ok("cpp")
+        "cpp"
     )]
     #[case::distinct_extensions(
         &[("ruby", &[ext("rb")][..]), ("python", &[ext("py")][..]), ("perl", &[ext("pl"), ext("pm")][..])],
         "script.pl",
-        None,
-        Ok("perl")
+        "perl"
     )]
     #[case::extension_beats_glob(
         &[("glob_only", &[glob("*.txt")][..]), ("ext_match", &[ext("txt")][..])],
         "file.txt",
-        None,
-        Ok("ext_match")
+        "ext_match"
     )]
-    #[case::explicit_request(
-        &[("rust", &[ext("rs")][..]), ("toml", &[ext("toml"), glob("Cargo.lock")][..])],
-        "anything.rs",
-        Some("toml"),
-        Ok("toml")
-    )]
-    #[case::unknown_explicit_request(
-        &[("rust", &[ext("rs")][..])],
-        "main.rs",
-        Some("brainfuck"),
-        Err("brainfuck")
-    )]
-    #[case::no_match(
-        &[("rust", &[ext("rs")][..])],
-        "unknown.xyz",
-        None,
-        Err("unknown.xyz")
-    )]
-    fn resolves_language(
+    fn finds_matching_spec(
         #[case] entries: &[(&str, &[ExtensionEntry])],
         #[case] path: &str,
-        #[case] requested: Option<&str>,
-        #[case] expected: Result<&str, &str>,
+        #[case] expected: &str,
     ) {
-        let reg = registry(entries);
-        let result = resolve(&reg, path, requested);
-
-        match expected {
-            Ok(id) => assert_eq!(result.unwrap().id, id),
-            Err(lang) => assert!(matches!(
-                result,
-                Err(GrammarError::UnknownLanguage(ref id)) if id == lang
-            )),
-        }
+        let specs = specs(entries);
+        let p = Path::new(path);
+        let matched = specs
+            .iter()
+            .find(|s| {
+                if let Some(ext) = p.extension().and_then(|e| e.to_str()) {
+                    s.matches_extension(ext)
+                } else {
+                    false
+                }
+            })
+            .or_else(|| specs.iter().find(|s| s.matches_path(p)));
+        assert_eq!(matched.map(|s| s.id.as_str()), Some(expected));
     }
 }

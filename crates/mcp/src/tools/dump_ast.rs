@@ -31,7 +31,7 @@ impl crate::TreeSitterServer {
         let lang = self
             .grammar
             .resolve_language(&params.file.path, params.file.language.as_deref())?;
-        let ast = ParseSession::new(lang.clone(), source)?.dump_ast(params.range);
+        let ast = ParseSession::new(lang, source)?.dump_ast(params.range);
 
         Ok(text_result(ast))
     }
