@@ -1269,61 +1269,84 @@ pub async fn find_node(
 
 ---
 
-## Capability Negotiation (MCP Resource)
+## Capability Negotiation (tool)
 
-Capabilities are surfaced as an MCP resource, not a tool — the data is
-static after server startup (computed once by walking each language's
-`queries/<language>/` directory per the Capability derivation table above)
-and doesn't change during a session.
+Capabilities are negotiated through the `tree_sitter_get_capabilities` **tool**,
+not an MCP resource. The client supplies the languages it intends to work with;
+the server lazily loads the matching grammars and reports, per language, whether
+it loaded, wasn't configured, or failed to load. An empty `languages` list is the
+discovery surface: it returns every configured language. Because loading is lazy,
+"which languages exist" (from config) and "which are actually usable right now"
+(from the grammar directory) are distinguished in the response.
+
+The tool is the client's first call at session start (after `initialize`/`tools/list`):
+the agent names its languages, sees what's usable, and the server scope is set.
+
+```rust
+pub async fn tree_sitter_get_capabilities(
+    languages: Vec<String>,           // empty = all configured languages
+) -> Result<Vec<LanguageStatus>, ApiError>
+```
 
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct ServerCapabilities {
-    pub languages: Vec<LanguageInfo>,
-    pub tools: Vec<ToolInfo>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct ToolInfo {
-    pub name: String,
-    pub description: String,
-    /// Generated via #[derive(JsonSchema)] on each tool's params
-    /// struct (rmcp + schemars), not hand-written JSON.
-    pub input_schema: serde_json::Value,
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum LanguageStatus {
+    Loaded { info: LanguageInfo },
+    NotConfigured { suggestions: Vec<String> },
+    LoadFailed { language: String, reason: String },
 }
 ```
 
-Resource URI: `tree-sitter://capabilities`
+- `Loaded` — the grammar was dlopen'd (or already cached); `info` carries its
+  name, extensions, and the `Capability`s its query directory derives.
+- `NotConfigured` — the id isn't a configured language; `suggestions` offers
+  near-name matches so the agent can retry intelligently.
+- `LoadFailed` — configured but no usable compiled grammar (missing `.so`,
+  dlopen failure, ABI mismatch); the `reason` names the failure.
 
-Example resource content — capabilities are computed once at server startup
-by walking each language's `queries/<language>/` directory per the
-Capability derivation table above, not self-reported by anything:
+`LanguageInfo`:
+
+```rust
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct LanguageInfo {
+    pub name: String,
+    pub extensions: Vec<String>,
+    pub capabilities: Vec<Capability>,
+}
+```
+
+Example response:
 
 ```json
-{
-  "languages": [
-    {
+[
+  {
+    "status": "loaded",
+    "info": {
       "name": "rust",
       "extensions": [".rs"],
-      "capabilities": ["members", "references", "implementors", "modules", "type_alias", "complexity", "edit_plan"]
-    },
-    {
-      "name": "typescript",
-      "extensions": [".ts", ".tsx"],
-      "capabilities": ["members", "references", "implementors", "modules", "type_alias", "complexity", "edit_plan"]
-    },
-    {
-      "name": "python",
-      "extensions": [".py"],
-      "capabilities": ["members", "references", "modules", "type_alias", "test_fixtures", "complexity"]
+      "capabilities": ["complexity"]
     }
-  ]
-}
+  },
+  {
+    "status": "load_failed",
+    "language": "typescript",
+    "reason": "grammar library not found"
+  },
+  {
+    "status": "not_configured",
+    "suggestions": []
+  }
+]
 ```
 
-A client should read this resource once at session start. This is the
-**only** place capability information is surfaced — there is no
-per-symbol echo of it.
+Capabilities are computed from the loaded grammar and its `queries/<language>/`
+directory per the Capability derivation table below — never self-reported. Until
+a language has query files, it derives only `capability -> [complexity]`.
+
+A client calls this once at session start. This is the **only** place capability
+information is surfaced — there is no per-symbol echo of it, and the former
+`tree-sitter://capabilities` / `tree-sitter://languages` resources are removed.
 
 ---
 
