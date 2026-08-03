@@ -11,7 +11,13 @@ impl crate::TreeSitterServer {
         description = "Guide for writing tree-sitter S-expression queries across the languages this server supports"
     )]
     async fn tree_sitter_query_guide(&self) -> Result<GetPromptResult, ErrorData> {
-        let ids = self.grammar.available_ids().join(", ");
+        let ids = self
+            .grammar
+            .available_ids()
+            .into_iter()
+            .map(|id| id.to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
         let text = format!(
             r#"Tree-sitter S-expression query syntax:
 

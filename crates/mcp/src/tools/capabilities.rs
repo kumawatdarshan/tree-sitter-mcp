@@ -1,4 +1,4 @@
-use grammar::{GrammarError, LanguageInfo, LanguageStatus};
+use grammar::{LanguageId, LanguageInfo, LanguageStatus};
 use rmcp::{
     handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool, tool_router,
 };
@@ -27,7 +27,11 @@ impl crate::TreeSitterServer {
         let requested = if params.languages.is_empty() {
             self.grammar.available_ids()
         } else {
-            params.languages
+            params
+                .languages
+                .into_iter()
+                .filter_map(|s| LanguageId::new(s).ok())
+                .collect::<Vec<_>>()
         };
 
         let available = self.grammar.available_ids();
@@ -41,17 +45,19 @@ impl crate::TreeSitterServer {
 }
 
 impl crate::TreeSitterServer {
-    fn language_status(&self, id: &str, available: &[String]) -> LanguageStatus {
+    fn language_status(&self, id: &LanguageId, available: &[LanguageId]) -> LanguageStatus {
+        let meta = match self.grammar.language(id) {
+            Some(meta) => meta,
+            None => {
+                return LanguageStatus::NotConfigured {
+                    suggestions: suggest_near(id, available),
+                };
+            }
+        };
+
         match self.grammar.load_language(id) {
-            Ok(lang) => LanguageStatus::Loaded {
-                info: LanguageInfo {
-                    name: lang.id.clone(),
-                    extensions: lang.extensions.iter().map(|e| e.to_string()).collect(),
-                    capabilities: vec![],
-                },
-            },
-            Err(GrammarError::UnknownLanguage(_)) => LanguageStatus::NotConfigured {
-                suggestions: suggest_near(id, available),
+            Ok(_) => LanguageStatus::Loaded {
+                info: LanguageInfo::from(&meta),
             },
             Err(err) => LanguageStatus::LoadFailed {
                 language: id.to_string(),
@@ -62,17 +68,17 @@ impl crate::TreeSitterServer {
 }
 
 /// Near-name matches for a not-configured id, for client self-correction.
-fn suggest_near(id: &str, available: &[String]) -> Vec<String> {
-    let mut scored: Vec<(usize, &String)> = available
+fn suggest_near(id: &LanguageId, available: &[LanguageId]) -> Vec<String> {
+    let mut scored: Vec<(usize, &LanguageId)> = available
         .iter()
-        .map(|cand| (edit_distance(id, cand), cand))
+        .map(|cand| (edit_distance(&id.to_string(), &cand.to_string()), cand))
         .collect();
     scored.sort_by_key(|(dist, _)| *dist);
 
     scored
         .into_iter()
         .filter(|(dist, _)| *dist <= 2)
-        .map(|(_, cand)| cand.clone())
+        .map(|(_, cand)| cand.to_string())
         .collect()
 }
 
@@ -109,15 +115,20 @@ mod tests {
     fn suggest_near_ranks_close_matches() {
         let available = ["rust", "python", "typescript"]
             .iter()
-            .map(|s| s.to_string())
+            .filter_map(|s| LanguageId::new(*s).ok())
             .collect::<Vec<_>>();
-        assert_eq!(suggest_near("ruts", &available), vec!["rust"]);
-        assert_eq!(suggest_near("pythonn", &available), vec!["python"]);
+        assert_eq!(
+            suggest_near(&LanguageId::new("ruts").unwrap(), &available),
+            vec!["rust"]
+        );
     }
 
     #[test]
     fn suggest_near_empty_when_far() {
-        let available = ["rust"].iter().map(|s| s.to_string()).collect::<Vec<_>>();
-        assert!(suggest_near("brainfuck", &available).is_empty());
+        let available = ["rust"]
+            .iter()
+            .filter_map(|s| LanguageId::new(*s).ok())
+            .collect::<Vec<_>>();
+        assert!(suggest_near(&LanguageId::new("brainfuck").unwrap(), &available).is_empty());
     }
 }

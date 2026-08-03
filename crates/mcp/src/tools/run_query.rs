@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 use crate::{
     McpError,
-    tools::{FileParams, json_result},
+    tools::{FileParams, ResolvedLanguage, json_result},
 };
 
 #[tool_router(router = run_query_router, vis = "pub(crate)")]
@@ -30,10 +30,11 @@ impl crate::TreeSitterServer {
         Parameters(params): Parameters<RunQueryParams>,
     ) -> Result<CallToolResult, McpError> {
         let source = std::fs::read_to_string(&params.file.path)?;
-        let lang = self
+        let lang = ResolvedLanguage::from_params(&params.file.language)?;
+        let grammar = self
             .grammar
-            .resolve_language(&params.file.path, params.file.language.as_deref())?;
-        let matches = ParseSession::new(lang, source)?.run_query(&params.query, params.range)?;
+            .resolve_language(&params.file.path, lang.as_ref())?;
+        let matches = ParseSession::new(grammar, source)?.run_query(&params.query, params.range)?;
 
         json_result(&matches, "query matches")
     }

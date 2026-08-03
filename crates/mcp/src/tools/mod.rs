@@ -1,7 +1,6 @@
 pub(crate) mod capabilities;
 pub(crate) mod dump_ast;
 pub(crate) mod find_node;
-pub(crate) mod list_languages;
 pub(crate) mod ping;
 pub(crate) mod run_query;
 
@@ -24,6 +23,29 @@ pub(crate) struct FileParams {
 
 pub(crate) fn text_result(text: impl Into<String>) -> CallToolResult {
     CallToolResult::success(vec![ContentBlock::text(text)])
+}
+
+/// Hold an optional explicit language id, so we can pass `Option<&LanguageId>`
+/// into the grammar engine without double-parsing.
+pub(crate) struct ResolvedLanguage(pub Option<grammar::LanguageId>);
+
+impl ResolvedLanguage {
+    pub fn from_params(language: &Option<String>) -> Result<Self, McpError> {
+        Ok(Self(match language {
+            Some(s) => Some(grammar::LanguageId::new(s.clone()).map_err(|e| {
+                McpError::Rmcp(ErrorData::new(
+                    ErrorCode::INVALID_PARAMS,
+                    format!("invalid language id `{s}`: {e}"),
+                    None,
+                ))
+            })?),
+            None => None,
+        }))
+    }
+
+    pub fn as_ref(&self) -> Option<&grammar::LanguageId> {
+        self.0.as_ref()
+    }
 }
 
 pub(crate) fn json_result<T: serde::Serialize>(

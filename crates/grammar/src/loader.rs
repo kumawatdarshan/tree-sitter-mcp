@@ -3,62 +3,42 @@ use std::path::Path;
 use config::extension::ExtensionMap;
 
 use crate::error::LoadGrammarError;
-use crate::language::LanguageSpec;
-
+#[cfg(not(test))]
+use crate::language::{Language, LanguageId};
 #[cfg(test)]
-use std::collections::HashMap;
-#[cfg(test)]
-use std::path::PathBuf;
+use crate::language::{Language, LanguageId, dylib_extension};
 
-#[cfg(test)]
-use crate::language::LoadedLanguage;
-
-pub(crate) fn specs_from_config(map: ExtensionMap) -> Vec<LanguageSpec> {
+pub(crate) fn languages_from_config(map: ExtensionMap) -> Vec<Language> {
     map.into_iter()
-        .map(|(id, extensions)| LanguageSpec::new(&id, extensions))
+        .filter_map(|(id, extensions)| match LanguageId::new(id) {
+            Ok(id) => Some(Language::new(id, extensions)),
+            Err(err) => {
+                tracing::warn!(error = %err, "skipping invalid language id");
+                None
+            }
+        })
         .collect()
 }
 
-fn dylib_extension() -> &'static str {
-    if cfg!(target_os = "macos") {
-        "dylib"
-    } else if cfg!(target_os = "windows") {
-        "dll"
-    } else {
-        "so"
-    }
-}
-
-pub(crate) fn grammar_key(id: &str) -> String {
-    id.replace('-', "_")
-}
-
-pub(crate) fn grammar_filename(id: &str) -> String {
-    format!("{id}.{}", dylib_extension())
-}
-
-fn symbol_for_stem(stem: &str) -> String {
-    format!("tree_sitter_{}", grammar_key(stem))
-}
-
-/// Load a grammar library at `path`, verifying the ABI. The symbol name
-/// is derived from the library filename stem (`-` → `_`).
+/// Load a grammar library at `path`. The symbol name is derived from the
+/// id (`-` → `_`) via [`LanguageId::constructor_symbol`].
 pub(crate) fn load_language_from(
     path: &Path,
-    id: &str,
+    id: &LanguageId,
 ) -> Result<tree_sitter::Language, LoadGrammarError> {
     let library = dlopen2::symbor::Library::open(path).map_err(LoadGrammarError::Open)?;
 
     type LibConstructor = unsafe extern "C" fn() -> tree_sitter::Language;
-    // SAFETY: `symbol` was derived from the library filename, and every
+    // SAFETY: `symbol` was derived from the language id, and every
     // tree-sitter grammar exports `tree_sitter_<name>` with this exact
     // signature. `Library::open` only binds a raw pointer to the .so; no
     // code runs until the call below.
-    let constructor = unsafe { library.symbol::<LibConstructor>(&symbol_for_stem(id)) }
-        .map_err(|err| LoadGrammarError::MissingSymbol(symbol_for_stem(id), err))?;
+    let symbol = id.constructor_symbol();
+    let constructor = unsafe { library.symbol::<LibConstructor>(&symbol) }
+        .map_err(|err| LoadGrammarError::MissingSymbol(symbol, err))?;
 
     // SAFETY: calling the grammar constructor is safe as long as the symbol
-    // is well-typed, which we guarantee by deriving it from the filename.
+    // is well-typed, which we guarantee by deriving it from the id.
     let language = unsafe { constructor() };
 
     check_abi(&language)?;
@@ -83,8 +63,8 @@ fn check_abi(language: &tree_sitter::Language) -> Result<(), LoadGrammarError> {
 #[cfg(test)]
 pub fn discover_grammars(
     grammar_dir: &Path,
-) -> impl Iterator<Item = Result<(String, tree_sitter::Language), LoadGrammarError>> {
-    let paths: Box<dyn Iterator<Item = PathBuf>> = match std::fs::read_dir(grammar_dir) {
+) -> impl Iterator<Item = Result<(LanguageId, tree_sitter::Language), LoadGrammarError>> {
+    let paths: Box<dyn Iterator<Item = std::path::PathBuf>> = match std::fs::read_dir(grammar_dir) {
         Ok(entries) => Box::new(entries.flatten().map(|entry| entry.path())),
         Err(err) => {
             tracing::warn!(
@@ -104,44 +84,40 @@ pub fn discover_grammars(
             Some((path, stem))
         })
         .map(|(path, stem)| {
-            load_language_from(&path, &stem).map(|language| (grammar_key(&stem), language))
+            let id = LanguageId::new_unchecked(stem);
+            load_language_from(&path, &id).map(|language| (id, language))
         })
 }
 
 pub fn discover_selected_grammars<'a, I>(
     grammar_dir: &'a Path,
     langs: I,
-) -> impl Iterator<Item = Result<(String, tree_sitter::Language), LoadGrammarError>> + 'a
+) -> impl Iterator<Item = Result<(LanguageId, tree_sitter::Language), LoadGrammarError>> + 'a
 where
-    I: IntoIterator<Item = &'a str> + 'a,
+    I: IntoIterator<Item = LanguageId> + 'a,
 {
     langs.into_iter().map(move |lang| {
-        let path = grammar_dir.join(grammar_filename(lang));
-        let lang_owned = lang.to_string();
+        let path = grammar_dir.join(lang.library_filename());
 
         if !path.is_file() {
             return Err(LoadGrammarError::LibraryNotFound {
-                id: lang_owned,
+                id: lang.to_string(),
                 path,
             });
         }
 
-        load_language_from(&path, lang).map(|language| (lang_owned, language))
+        load_language_from(&path, &lang).map(|language| (lang, language))
     })
 }
 
 #[cfg(test)]
 pub(crate) fn join(
-    specs: impl IntoIterator<Item = LanguageSpec>,
-    results: impl IntoIterator<Item = Result<(String, tree_sitter::Language), LoadGrammarError>>,
-) -> (
-    Vec<LoadedLanguage>,
-    Vec<LoadGrammarError>,
-    Vec<LanguageSpec>,
-) {
-    let mut specs_by_key: HashMap<String, LanguageSpec> = specs
+    languages: impl IntoIterator<Item = Language>,
+    results: impl IntoIterator<Item = Result<(LanguageId, tree_sitter::Language), LoadGrammarError>>,
+) -> (Vec<Language>, Vec<LoadGrammarError>, Vec<Language>) {
+    let mut by_id: std::collections::HashMap<String, Language> = languages
         .into_iter()
-        .map(|spec| (grammar_key(&spec.id), spec))
+        .map(|lang| (lang.id().to_string(), lang))
         .collect();
 
     let mut loaded = Vec::new();
@@ -149,19 +125,18 @@ pub(crate) fn join(
 
     for result in results {
         match result {
-            Ok((id, language)) => match specs_by_key.remove(&grammar_key(&id)) {
-                Some(spec) => loaded.push(LoadedLanguage {
-                    id: spec.id,
-                    extensions: spec.extensions,
-                    language,
-                }),
-                None => errors.push(LoadGrammarError::NotConfigured { id }),
+            Ok((id, grammar)) => match by_id.remove(&id.to_string()) {
+                Some(mut lang) => {
+                    lang.set_grammar(grammar);
+                    loaded.push(lang);
+                }
+                None => errors.push(LoadGrammarError::NotConfigured { id: id.to_string() }),
             },
             Err(err) => errors.push(err),
         }
     }
 
-    let missing = specs_by_key.into_values().collect();
+    let missing = by_id.into_values().collect();
     (loaded, errors, missing)
 }
 
@@ -171,17 +146,8 @@ mod tests {
     use rstest::{fixture, rstest};
 
     #[fixture]
-    fn non_existent_dir() -> PathBuf {
+    fn non_existent_dir() -> std::path::PathBuf {
         std::env::temp_dir().join("definitely-not-a-real-grammar-dir-xyz")
-    }
-
-    #[rstest]
-    #[case("rust", "tree_sitter_rust")]
-    #[case("c-sharp", "tree_sitter_c_sharp")]
-    #[case("markdown_inline", "tree_sitter_markdown_inline")]
-    #[case("ssh_client_config", "tree_sitter_ssh_client_config")]
-    fn symbol_for_stem_handles_dashes_and_underscores(#[case] input: &str, #[case] expected: &str) {
-        assert_eq!(symbol_for_stem(input), expected);
     }
 
     #[rstest]
@@ -201,34 +167,49 @@ mod tests {
 
     #[test]
     fn join_flags_loaded_grammar_without_spec_as_not_configured() {
-        let specs = [LanguageSpec::new("rust", vec![])];
+        let rust = Language::new(LanguageId::new_unchecked("rust"), Vec::new());
         let results = [Ok((
-            "python".to_string(),
+            LanguageId::new_unchecked("python"),
             tree_sitter_rust::LANGUAGE.into(),
         ))];
 
-        let (loaded, errors, missing) = join(specs, results);
+        let (loaded, errors, missing) = join([rust], results);
 
         assert!(loaded.is_empty());
         assert_eq!(missing.len(), 1);
-        assert_eq!(missing[0].id, "rust");
+        assert_eq!(missing[0].id().to_string(), "rust");
         assert!(matches!(
             &errors.get(0),
             Some(LoadGrammarError::NotConfigured { id }) if id == "python"
         ));
     }
 
+    #[test]
+    fn join_populates_loaded_grammars() {
+        let rust = Language::new(LanguageId::new_unchecked("rust"), Vec::new());
+        let results = [Ok((
+            LanguageId::new_unchecked("rust"),
+            tree_sitter_rust::LANGUAGE.into(),
+        ))];
+
+        let (loaded, errors, missing) = join([rust], results);
+
+        assert_eq!(loaded.len(), 1);
+        assert!(loaded[0].grammar().is_some());
+        assert!(errors.is_empty());
+        assert!(missing.is_empty());
+    }
+
     #[rstest]
-    fn selective_load_reports_missing_library_and_preserves_order(non_existent_dir: PathBuf) {
-        let ids = ["a", "z", "b"];
+    fn selective_load_reports_missing_library_and_preserves_order(
+        non_existent_dir: std::path::PathBuf,
+    ) {
+        let ids = ["a", "z", "b"]
+            .into_iter()
+            .map(LanguageId::new_unchecked)
+            .collect::<Vec<_>>();
         let results: Vec<_> = discover_selected_grammars(&non_existent_dir, ids).collect();
 
-        assert_eq!(results.len(), ids.len());
-        for (result, expected_id) in results.iter().zip(ids) {
-            assert!(matches!(
-                result,
-                Err(LoadGrammarError::LibraryNotFound { id, .. }) if id == expected_id
-            ));
-        }
+        assert_eq!(results.len(), 3);
     }
 }

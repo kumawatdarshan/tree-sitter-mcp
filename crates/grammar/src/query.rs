@@ -50,7 +50,7 @@ impl ParseSession {
         range: Option<R>,
     ) -> Result<Vec<QueryMatch>, GrammarError> {
         let root = apply_range(self.tree.root_node(), range);
-        let query = Query::new(&self.language.language, query_str)?;
+        let query = Query::new(&self.grammar, query_str)?;
 
         let mut cursor = QueryCursor::new();
         let mut matches_iter = cursor.matches(&query, root, self.source.as_bytes());

@@ -29,7 +29,6 @@ impl TreeSitterServer {
             + Self::run_query_router()
             + Self::dump_ast_router()
             + Self::find_node_router()
-            + Self::list_languages_router()
     }
 }
 

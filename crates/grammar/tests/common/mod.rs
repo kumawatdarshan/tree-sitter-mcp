@@ -5,7 +5,7 @@ use std::sync::OnceLock;
 
 use config::extension::ext;
 use grammar::{
-    FindNodeResult, GrammarEngine, GrammarError, LoadedLanguage, ParseSession, QueryMatch,
+    FindNodeResult, GrammarEngine, GrammarError, Language, LanguageId, ParseSession, QueryMatch,
 };
 
 pub const NONE_RANGE: Option<std::ops::Range<usize>> = None::<std::ops::Range<usize>>;
@@ -13,11 +13,11 @@ pub const NONE_RANGE: Option<std::ops::Range<usize>> = None::<std::ops::Range<us
 pub fn engine_with_rust() -> &'static GrammarEngine {
     static ENGINE: OnceLock<GrammarEngine> = OnceLock::new();
     ENGINE.get_or_init(|| {
-        GrammarEngine::from_languages(vec![LoadedLanguage {
-            id: "rust".to_string(),
-            extensions: vec![ext("rs")],
-            language: tree_sitter_rust::LANGUAGE.into(),
-        }])
+        GrammarEngine::from_languages(vec![Language::loaded(
+            LanguageId::new("rust").unwrap(),
+            vec![ext("rs")],
+            tree_sitter_rust::LANGUAGE.into(),
+        )])
     })
 }
 
@@ -40,7 +40,7 @@ where
     let engine = engine_with_rust();
     let source = std::fs::read_to_string(path).expect("fixture source should be readable");
     let path_str = path.to_str().expect("fixture path must be valid UTF-8");
-    let lang = engine.resolve_language(path_str, Some("rust"))?;
+    let lang = engine.resolve_language(path_str, Some(&LanguageId::new("rust").unwrap()))?;
     ParseSession::new(lang, source)?.run_query(query_str, range)
 }
 
@@ -60,7 +60,8 @@ pub fn find_node(byte: usize) -> Result<FindNodeResult, GrammarError> {
 
 pub fn find_node_in_source(source: &str, byte: usize) -> Result<FindNodeResult, GrammarError> {
     let path_str = "test.rs";
-    let lang = engine_with_rust().resolve_language(path_str, Some("rust"))?;
+    let lang =
+        engine_with_rust().resolve_language(path_str, Some(&LanguageId::new("rust").unwrap()))?;
     ParseSession::new(lang, source.to_string())?.find_node(byte)
 }
 

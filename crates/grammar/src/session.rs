@@ -5,7 +5,6 @@ use serde::Serialize;
 use tree_sitter::{Node, Parser};
 
 use crate::error::GrammarError;
-use crate::language::LoadedLanguage;
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
 #[serde(remote = "tree_sitter::Point")]
@@ -72,26 +71,26 @@ pub(crate) fn apply_range<'a, R: RangeBounds<usize>>(root: Node<'a>, range: Opti
 
 /// A parsed source file, ready for tree-sitter operations.
 ///
-/// Created via [`ParseSession::new`]. Borrows the language from
-/// the engine and owns the source text + parse tree.
+/// Created via [`ParseSession::new`] from a grammar ABI handle obtained
+/// from [`crate::GrammarEngine`]; owns the source text + parse tree.
 pub struct ParseSession {
-    pub(crate) language: LoadedLanguage,
+    pub(crate) grammar: tree_sitter::Language,
     pub(crate) source: String,
     pub(crate) tree: tree_sitter::Tree,
 }
 
 impl ParseSession {
-    pub fn new(language: LoadedLanguage, source: String) -> Result<Self, GrammarError> {
+    pub fn new(grammar: tree_sitter::Language, source: String) -> Result<Self, GrammarError> {
         let mut parser = Parser::new();
         parser
-            .set_language(&language.language)
+            .set_language(&grammar)
             .map_err(GrammarError::SetLanguage)?;
 
         // TODO: i think it cannot return a None state due to existing checks.
         let tree = parser.parse(&source, None).unwrap();
 
         Ok(Self {
-            language,
+            grammar,
             source,
             tree,
         })
