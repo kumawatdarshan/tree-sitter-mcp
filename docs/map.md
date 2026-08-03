@@ -30,7 +30,7 @@ A general-purpose, multi-language tree-sitter MCP server in Rust (stdio transpor
 - **03 nl-to-s-expression-prompt** → MCP prompt resource teaching S-expression queries, shipped as the `query_guide` prompt (plan §Prompt Resource)
 - **04 ast-serialization** → named-nodes-only JSON, cursor-based traversal with `max_depth` truncation (plan §AST Serialization)
 - **05 mcp-resources** → capabilities and languages as MCP resources (`tree-sitter://capabilities`, `tree-sitter://languages`), not tools (API.md §Capability Negotiation) — **superseded:** capabilities are now negotiated via the `tree_sitter_get_capabilities` **tool** (client supplies languages, server lazy-loads), resources removed
-- **06 rust-module-structure** → split crates `app` / `config` / `grammar` / `mcp`; semantic layer lands as a new `semantics` crate in P0 (plan §Architecture)
+- **06 rust-module-structure** → split crates `app` / `config` / `grammar` / `mcp`; wire types live in the `grammar` crate in P0 (plan §Architecture)
 - **07 capabilities-first-negotiation** → `tree_sitter_get_capabilities(languages: Vec<String>)` tool is the session opener: client passes the languages it needs (empty = all available), the server lazy-loads them and returns `Vec<LanguageStatus>` (`Loaded` / `NotConfigured` / `LoadFailed`) so a client can distinguish a typo from a missing grammar. Removes the `tree-sitter://languages` resource. (`grammar` crate, `capabilities.rs`)
 
 ## Not yet specified

@@ -24,7 +24,7 @@ Labels use scoped `namespace:value` names where grouping matters, plus a few pla
 
 ### `area:*` — where the work lands (components + nature of change)
 
-`area:app` (crates/app — entrypoint, telemetry) · `area:config` (crates/config) · `area:grammar` (crates/grammar) · `area:mcp` (crates/mcp — server, tools, resources, prompts) · `area:semantics` (semantic layer / P0 contract types + tools) · `area:docs` · `area:tooling` (nix, just, CI) · `area:api` (wire contract / tool surface) · `area:engine` (core machinery, no wire change) · `area:test` (tests, benches, fixtures) · `area:infra` (build, release, packaging)
+`area:app` (crates/app — entrypoint, telemetry) · `area:config` (crates/config) · `area:grammar` (crates/grammar — engine + wire types) · `area:mcp` (crates/mcp — server, tools, resources, prompts) · `area:docs` · `area:tooling` (nix, just, CI) · `area:api` (wire contract / tool surface) · `area:engine` (core machinery, no wire change) · `area:test` (tests, benches, fixtures) · `area:infra` (build, release, packaging)
 
 ### `priority:*`
 
