@@ -1,3 +1,4 @@
+pub mod capabilities;
 pub mod error;
 pub mod find;
 pub mod language;
@@ -11,6 +12,7 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use config::extension::ExtensionMap;
+pub use capabilities::{Capability, LanguageInfo, LanguageStatus};
 pub use error::{GrammarError, LoadGrammarError};
 pub use find::FindNodeResult;
 pub use language::{LanguageSummary, LoadedLanguage};
