@@ -7,10 +7,10 @@ use rmcp::{
 #[prompt_router(vis = "pub")]
 impl crate::TreeSitterServer {
     #[prompt(
-        name = "query_guide",
+        name = "tree_sitter_query_guide",
         description = "Guide for writing tree-sitter S-expression queries across the languages this server supports"
     )]
-    async fn query_guide(&self) -> Result<GetPromptResult, ErrorData> {
+    async fn tree_sitter_query_guide(&self) -> Result<GetPromptResult, ErrorData> {
         let ids = self.grammar.available_ids().join(", ");
         let text = format!(
             r#"Tree-sitter S-expression query syntax:
