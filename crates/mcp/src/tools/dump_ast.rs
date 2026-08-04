@@ -2,7 +2,7 @@ use grammar::ParseSession;
 
 use crate::{
     McpError,
-    tools::{FileParams, text_result},
+    tools::{FileParams, ResolvedLanguage, text_result},
 };
 use rmcp::{
     handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool, tool_router,
@@ -28,10 +28,11 @@ impl crate::TreeSitterServer {
         Parameters(params): Parameters<DumpAstParams>,
     ) -> Result<CallToolResult, McpError> {
         let source = std::fs::read_to_string(&params.file.path)?;
-        let lang = self
+        let lang = ResolvedLanguage::from_params(&params.file.language)?;
+        let grammar = self
             .grammar
-            .resolve_language(&params.file.path, params.file.language.as_deref())?;
-        let ast = ParseSession::new(lang, source)?.dump_ast(params.range);
+            .resolve_language(&params.file.path, lang.as_ref())?;
+        let ast = ParseSession::new(grammar, source)?.dump_ast(params.range);
 
         Ok(text_result(ast))
     }

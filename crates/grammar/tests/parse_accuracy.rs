@@ -1,15 +1,16 @@
 mod common;
 
+use grammar::LanguageId;
 use insta::assert_snapshot;
 
 #[test]
 fn dump_ast_preserves_tree_sitter_error_recovery() {
     let source = common::fixture_source();
     let lang = common::engine_with_rust()
-        .resolve_language("test.rs", Some("rust"))
+        .resolve_language("test.rs", Some(&LanguageId::new("rust").unwrap()))
         .expect("language should resolve");
 
-    let ast = grammar::ParseSession::new(lang.clone(), source)
+    let ast = grammar::ParseSession::new(lang, source)
         .expect("parse should succeed")
         .dump_ast(common::NONE_RANGE);
 
@@ -28,10 +29,10 @@ fn dump_ast_can_be_limited_to_a_byte_range() {
         .expect("fixture should contain fetch_data body end");
 
     let lang = common::engine_with_rust()
-        .resolve_language("test.rs", Some("rust"))
+        .resolve_language("test.rs", Some(&LanguageId::new("rust").unwrap()))
         .expect("language should resolve");
 
-    let session = grammar::ParseSession::new(lang.clone(), source).expect("parse should succeed");
+    let session = grammar::ParseSession::new(lang, source).expect("parse should succeed");
     let full = session.dump_ast(common::NONE_RANGE);
     let limited = session.dump_ast(Some(start..end));
 

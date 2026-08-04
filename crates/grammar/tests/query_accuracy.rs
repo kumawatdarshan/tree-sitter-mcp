@@ -32,10 +32,10 @@ fn finds_async_function_with_attributes() {
         .expect("fixture should contain the buggy-portion marker");
 
     let lang = common::engine_with_rust()
-        .resolve_language("test.rs", Some("rust"))
+        .resolve_language("test.rs", Some(&grammar::LanguageId::new("rust").unwrap()))
         .expect("language should resolve");
 
-    let matches = grammar::ParseSession::new(lang.clone(), valid.to_string())
+    let matches = grammar::ParseSession::new(lang, valid.to_string())
         .expect("parse should succeed")
         .run_query(
             r#"((attribute_item) @attr

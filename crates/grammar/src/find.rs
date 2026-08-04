@@ -40,18 +40,22 @@ fn collect_ancestors(node: tree_sitter::Node, source: &str) -> Vec<NodeInfo> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::LoadedLanguage;
+    use crate::{Language, LanguageId};
 
-    fn rust_language() -> LoadedLanguage {
-        LoadedLanguage {
-            id: "rust".to_string(),
-            extensions: vec![],
-            language: tree_sitter_rust::LANGUAGE.into(),
-        }
+    fn rust_language() -> Language {
+        Language::loaded(
+            LanguageId::new_unchecked("rust"),
+            vec![],
+            tree_sitter_rust::LANGUAGE.into(),
+        )
     }
 
     fn parse_session(source: &str) -> ParseSession {
-        ParseSession::new(rust_language(), source.to_string()).expect("parse should succeed")
+        ParseSession::new(
+            rust_language().grammar().unwrap().clone(),
+            source.to_string(),
+        )
+        .expect("parse should succeed")
     }
 
     #[test]

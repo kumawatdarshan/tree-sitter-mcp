@@ -49,20 +49,23 @@ src/
   server.rs            — rmcp server struct, tool registration, ServerHandler impl
   config.rs            — runtime config: extension→language map, grammar dir, etc.
   grammar/
-    mod.rs             — GrammarManager: dlopen .so, cache Language values
+    mod.rs             — GrammarEngine: lazy dlopen, caches Language values
     dlopen.rs          — unsafe libloading wrapper for tree_sitter_* symbols
   tools/
-    mod.rs             — single `parse` tool dispatch (action param)
-    ast.rs             — cursor-based tree→JSON serialization (named nodes only)
+    mod.rs             — tool router + shared params/result helpers
+    capabilities.rs    — tree_sitter_get_capabilities: lazy-load + per-language status
     query.rs           — run tree-sitter S-expression queries
+    ast.rs             — cursor-based tree→JSON serialization (named nodes only)
     symbols.rs         — extract named definitions (functions, classes, etc.)
     node_at.rs         — find node at position (line:col)
     references.rs      — find usages of a symbol
   prompts/
     mod.rs             — NL → S-expression prompt content
-    query_patterns.rs  — per-language query pattern tables
+    query_guide.rs     — the tree_sitter_query_guide prompt
   error.rs             — structured error types for agent-readable messages
 ```
+
+`crates/grammar/` owns both the engine and the wire types shared by tools (`Capability`, `LanguageInfo`, `LanguageStatus`, and later the full contract vocabulary from `docs/API.md`). `GrammarEngine` no longer eagerly scans the grammar directory at startup — `discover_grammars`/`join` are now test-only helpers.
 
 ## Runtime Config
 
@@ -136,11 +139,13 @@ std::mem::forget(library);  // Language borrows tables/strings from the .so
 ```rust
 // crates/grammar/src/lib.rs
 pub struct GrammarEngine {
-    registry: GrammarRegistry,
+    grammar_dir: std::path::PathBuf,
+    specs: HashMap<String, LanguageSpec>,            // declared in config (available)
+    loaded: Mutex<HashMap<String, LoadedLanguage>>,  // dlopen'd on demand (cached)
 }
 ```
 
-`GrammarEngine::load` runs three steps: `specs_from_config` (config → specs, no I/O), `discover_grammars` (scan + dlopen), `join` (match specs to discovered grammars; unmatched config entries are returned as `missing` and warned about at startup). `resolve_language(path, requested_id)` is pure, extension-first then glob fallback.
+Grammars load **lazily**: `GrammarEngine::load` only records the config's specs (id + extensions, no I/O). `load_language(id)` / `resolve_language(path, lang)` dlopen a grammar on first need and cache it for the process lifetime. `available_ids()` returns the configured set (the discovery surface for capabilities); a configured id with no compiled library is a load error. `from_languages` preloads languages for tests and embedding.
 
 ### Grammar directory resolution
 

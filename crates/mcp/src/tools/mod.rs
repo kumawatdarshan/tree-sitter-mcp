@@ -1,20 +1,14 @@
+pub(crate) mod capabilities;
 pub(crate) mod dump_ast;
 pub(crate) mod find_node;
-pub(crate) mod list_languages;
 pub(crate) mod ping;
 pub(crate) mod run_query;
 
 use crate::{McpError, TreeSitterServer};
 use rmcp::{
-    ErrorData, RoleServer, ServerHandler,
-    model::{
-        CallToolResult, ContentBlock, ErrorCode, Implementation, ListResourcesResult,
-        PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult, Resource,
-        ResourceContents, ServerCapabilities,
-    },
-    prompt_handler, schemars,
-    service::RequestContext,
-    tool_handler,
+    ErrorData, ServerHandler,
+    model::{CallToolResult, ContentBlock, ErrorCode, Implementation, ServerCapabilities},
+    prompt_handler, schemars, tool_handler,
 };
 use serde::Deserialize;
 
@@ -29,6 +23,29 @@ pub(crate) struct FileParams {
 
 pub(crate) fn text_result(text: impl Into<String>) -> CallToolResult {
     CallToolResult::success(vec![ContentBlock::text(text)])
+}
+
+/// Hold an optional explicit language id, so we can pass `Option<&LanguageId>`
+/// into the grammar engine without double-parsing.
+pub(crate) struct ResolvedLanguage(pub Option<grammar::LanguageId>);
+
+impl ResolvedLanguage {
+    pub fn from_params(language: &Option<String>) -> Result<Self, McpError> {
+        Ok(Self(match language {
+            Some(s) => Some(grammar::LanguageId::new(s.clone()).map_err(|e| {
+                McpError::Rmcp(ErrorData::new(
+                    ErrorCode::INVALID_PARAMS,
+                    format!("invalid language id `{s}`: {e}"),
+                    None,
+                ))
+            })?),
+            None => None,
+        }))
+    }
+
+    pub fn as_ref(&self) -> Option<&grammar::LanguageId> {
+        self.0.as_ref()
+    }
 }
 
 pub(crate) fn json_result<T: serde::Serialize>(
@@ -53,53 +70,14 @@ impl ServerHandler for TreeSitterServer {
             ServerCapabilities::builder()
                 .enable_tools()
                 .enable_prompts()
-                .enable_resources()
                 .build(),
         )
         .with_server_info(Implementation::new("tree-sitter-mcp", "0.0.1"))
         .with_instructions(
             "Parse and analyze source code files using tree-sitter grammars. \
-             Start with tree_sitter_list_languages to see what's supported, \
-             tree_sitter_dump_ast to explore a file's structure, then \
-             tree_sitter_run_query or tree_sitter_find_node for targeted lookups.",
+             Start with tree_sitter_get_capabilities to load the languages you need \
+             and see what's supported, then tree_sitter_dump_ast to explore a file's \
+             structure, then tree_sitter_run_query or tree_sitter_find_node for targeted lookups.",
         )
-    }
-
-    async fn list_resources(
-        &self,
-        _request: Option<PaginatedRequestParams>,
-        _context: RequestContext<RoleServer>,
-    ) -> Result<ListResourcesResult, ErrorData> {
-        Ok(ListResourcesResult::with_all_items(vec![
-            Resource::new("tree-sitter://languages", "Supported Languages")
-                .with_description("List of languages with available grammars")
-                .with_mime_type("text/plain"),
-        ]))
-    }
-
-    async fn read_resource(
-        &self,
-        request: ReadResourceRequestParams,
-        _context: RequestContext<RoleServer>,
-    ) -> Result<ReadResourceResult, ErrorData> {
-        let uri = request.uri.as_str();
-        match uri {
-            "tree-sitter://languages" => {
-                let text = self.grammar.available_ids().join("\n");
-
-                Ok(ReadResourceResult::new(vec![
-                    ResourceContents::TextResourceContents {
-                        uri: "tree-sitter://languages".into(),
-                        text,
-                        mime_type: Some("text/plain".into()),
-                        meta: None,
-                    },
-                ]))
-            }
-            _ => Err(ErrorData::resource_not_found(
-                format!("Resource not found: {uri}. Available: tree-sitter://languages"),
-                None,
-            )),
-        }
     }
 }

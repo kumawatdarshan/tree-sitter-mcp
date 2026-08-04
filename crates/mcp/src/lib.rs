@@ -14,6 +14,7 @@ pub struct TreeSitterServer {
     pub(crate) grammar: Arc<GrammarEngine>,
     tool_router: ToolRouter<Self>,
 }
+
 impl TreeSitterServer {
     pub fn new(grammar: Arc<GrammarEngine>) -> Self {
         Self {
@@ -24,10 +25,10 @@ impl TreeSitterServer {
 
     fn tool_router() -> ToolRouter<Self> {
         Self::ping_router()
+            + Self::capabilities_router()
             + Self::run_query_router()
             + Self::dump_ast_router()
             + Self::find_node_router()
-            + Self::list_languages_router()
     }
 }
 
