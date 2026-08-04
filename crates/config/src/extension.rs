@@ -31,7 +31,7 @@ where
 pub struct ExtensionMap(HashMap<String, Vec<ExtensionEntry>>);
 
 impl ExtensionMap {
-    pub(crate) fn from_toml_str(s: &str) -> Result<Self, ConfigError> {
+    pub fn from_toml_str(s: &str) -> Result<Self, ConfigError> {
         let map: Self = toml::from_str(s)?;
         for (lang_key, entries) in &map.0 {
             if entries.is_empty() {

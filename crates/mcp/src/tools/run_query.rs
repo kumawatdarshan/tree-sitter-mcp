@@ -33,8 +33,7 @@ impl crate::TreeSitterServer {
         let lang = self
             .grammar
             .resolve_language(&params.file.path, params.file.language.as_deref())?;
-        let matches =
-            ParseSession::new(lang.clone(), source)?.run_query(&params.query, params.range)?;
+        let matches = ParseSession::new(lang, source)?.run_query(&params.query, params.range)?;
 
         json_result(&matches, "query matches")
     }

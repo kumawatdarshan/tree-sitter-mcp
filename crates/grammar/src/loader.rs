@@ -1,30 +1,21 @@
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use config::extension::{ExtensionEntry, ExtensionMap};
+use config::extension::ExtensionMap;
 
 use crate::error::LoadGrammarError;
+use crate::language::LanguageSpec;
+
+#[cfg(test)]
+use std::collections::HashMap;
+#[cfg(test)]
+use std::path::PathBuf;
+
+#[cfg(test)]
 use crate::language::LoadedLanguage;
-
-/// Intermediate type — declared in config, grammar not yet resolved.
-#[derive(Debug, Clone)]
-pub(crate) struct LanguageSpec {
-    pub id: String,
-    pub extensions: Vec<ExtensionEntry>,
-}
-
-impl LanguageSpec {
-    fn new(id: &str, extensions: impl IntoIterator<Item = ExtensionEntry>) -> Self {
-        Self {
-            id: id.to_owned(),
-            extensions: extensions.into_iter().collect(),
-        }
-    }
-}
 
 pub(crate) fn specs_from_config(map: ExtensionMap) -> Vec<LanguageSpec> {
     map.into_iter()
-        .map(|(id, extensions)| LanguageSpec { id, extensions })
+        .map(|(id, extensions)| LanguageSpec::new(&id, extensions))
         .collect()
 }
 
@@ -38,15 +29,24 @@ fn dylib_extension() -> &'static str {
     }
 }
 
-fn grammar_key(id: &str) -> String {
+pub(crate) fn grammar_key(id: &str) -> String {
     id.replace('-', "_")
+}
+
+pub(crate) fn grammar_filename(id: &str) -> String {
+    format!("{id}.{}", dylib_extension())
 }
 
 fn symbol_for_stem(stem: &str) -> String {
     format!("tree_sitter_{}", grammar_key(stem))
 }
 
-fn load_language(path: &Path, symbol: &str) -> Result<tree_sitter::Language, LoadGrammarError> {
+/// Load a grammar library at `path`, verifying the ABI. The symbol name
+/// is derived from the library filename stem (`-` → `_`).
+pub(crate) fn load_language_from(
+    path: &Path,
+    id: &str,
+) -> Result<tree_sitter::Language, LoadGrammarError> {
     let library = dlopen2::symbor::Library::open(path).map_err(LoadGrammarError::Open)?;
 
     type LibConstructor = unsafe extern "C" fn() -> tree_sitter::Language;
@@ -54,8 +54,8 @@ fn load_language(path: &Path, symbol: &str) -> Result<tree_sitter::Language, Loa
     // tree-sitter grammar exports `tree_sitter_<name>` with this exact
     // signature. `Library::open` only binds a raw pointer to the .so; no
     // code runs until the call below.
-    let constructor = unsafe { library.symbol::<LibConstructor>(symbol) }
-        .map_err(|err| LoadGrammarError::MissingSymbol(symbol.to_string(), err))?;
+    let constructor = unsafe { library.symbol::<LibConstructor>(&symbol_for_stem(id)) }
+        .map_err(|err| LoadGrammarError::MissingSymbol(symbol_for_stem(id), err))?;
 
     // SAFETY: calling the grammar constructor is safe as long as the symbol
     // is well-typed, which we guarantee by deriving it from the filename.
@@ -80,6 +80,7 @@ fn check_abi(language: &tree_sitter::Language) -> Result<(), LoadGrammarError> {
     }
 }
 
+#[cfg(test)]
 pub fn discover_grammars(
     grammar_dir: &Path,
 ) -> impl Iterator<Item = Result<(String, tree_sitter::Language), LoadGrammarError>> {
@@ -103,8 +104,7 @@ pub fn discover_grammars(
             Some((path, stem))
         })
         .map(|(path, stem)| {
-            let symbol = symbol_for_stem(&stem);
-            load_language(&path, &symbol).map(|language| (grammar_key(&stem), language))
+            load_language_from(&path, &stem).map(|language| (grammar_key(&stem), language))
         })
 }
 
@@ -116,7 +116,7 @@ where
     I: IntoIterator<Item = &'a str> + 'a,
 {
     langs.into_iter().map(move |lang| {
-        let path = grammar_dir.join(format!("{lang}.{}", dylib_extension()));
+        let path = grammar_dir.join(grammar_filename(lang));
         let lang_owned = lang.to_string();
 
         if !path.is_file() {
@@ -126,11 +126,11 @@ where
             });
         }
 
-        let symbol = symbol_for_stem(lang);
-        load_language(&path, &symbol).map(|language| (lang_owned, language))
+        load_language_from(&path, lang).map(|language| (lang_owned, language))
     })
 }
 
+#[cfg(test)]
 pub(crate) fn join(
     specs: impl IntoIterator<Item = LanguageSpec>,
     results: impl IntoIterator<Item = Result<(String, tree_sitter::Language), LoadGrammarError>>,
@@ -201,7 +201,7 @@ mod tests {
 
     #[test]
     fn join_flags_loaded_grammar_without_spec_as_not_configured() {
-        let specs = [LanguageSpec::new("rust", [])];
+        let specs = [LanguageSpec::new("rust", vec![])];
         let results = [Ok((
             "python".to_string(),
             tree_sitter_rust::LANGUAGE.into(),

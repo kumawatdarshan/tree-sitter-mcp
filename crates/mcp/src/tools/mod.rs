@@ -85,12 +85,7 @@ impl ServerHandler for TreeSitterServer {
         let uri = request.uri.as_str();
         match uri {
             "tree-sitter://languages" => {
-                let text = self
-                    .grammar
-                    .loaded_language_ids()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<_>>()
-                    .join("\n");
+                let text = self.grammar.available_ids().join("\n");
 
                 Ok(ReadResourceResult::new(vec![
                     ResourceContents::TextResourceContents {
